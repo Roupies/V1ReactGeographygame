@@ -1,0 +1,138 @@
+/* src/App.css */
+
+/* Styles généraux pour le document HTML, le corps et l'élément racine de l'application React */
+html, body, #root {
+  margin: 0; /* Supprime les marges par défaut du navigateur */
+  padding: 0; /* Supprime les paddings par défaut du navigateur */
+  height: 100%; /* S'assure que ces éléments occupent toute la hauteur disponible du viewport */
+  overflow: hidden; /* Empêche le défilement de la page, car la carte et l'UI sont gérées en interne */
+  font-family: 'Arial', sans-serif; /* Définit une police de caractères par défaut */
+  
+  /* Couleur de fond des mers/océans et des zones hors de la carte de l'Europe. */
+  /* Inspirée de la couleur foncée des océans sur Google Maps. */
+  background-color: #183040;
+  
+  /* Pour ajouter une texture de vagues aux océans, décommentez et ajustez ces lignes : */
+  /* background-image: url('/public/images/wave-texture.svg'); */
+  /* background-repeat: repeat; */
+  /* background-size: 50px 50px; /* Ajustez la taille de répétition selon votre texture */
+}
+
+/* Style du conteneur principal de l'application React */
+.App {
+  position: relative; /* Permet un positionnement absolu des enfants (comme .map-container) */
+  width: 100vw; /* L'application prend 100% de la largeur du viewport */
+  height: 100vh; /* L'application prend 100% de la hauteur du viewport */
+  display: flex; /* Utilise Flexbox pour organiser le contenu verticalement */
+  flex-direction: column; /* Les éléments enfants sont empilés les uns au-dessus des autres */
+  align-items: center; /* Centre les éléments enfants horizontalement */
+  justify-content: space-between; /* Espace les éléments enfants verticalement (header en haut, controls en bas, carte au milieu) */
+}
+
+/* Styles pour le conteneur de la carte */
+.map-container {
+  position: absolute; /* Positionne la carte par-dessus le fond mais en dessous des éléments UI */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Assure que la carte est en dessous des éléments d'interface utilisateur */
+}
+
+/* Styles pour le bandeau d'en-tête du jeu (titre) */
+.game-header {
+  position: relative; /* Pour que le z-index fonctionne */
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+  z-index: 10; /* Place l'en-tête au-dessus de la carte */
+  color: #DDD; /* Couleur du texte (plus clair sur fond sombre) */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Légère ombre pour la lisibilité */
+}
+
+.game-header h1 {
+  font-size: 3.5em; /* Grande taille de police pour le titre */
+  color: #FFF; /* Couleur claire pour le titre sur fond sombre */
+  margin: 0; /* Supprime les marges par défaut du h1 */
+}
+
+/* Styles pour la zone de contrôles (champ de saisie, bouton "Deviner") */
+.game-controls {
+  position: relative; /* Pour que le z-index fonctionne */
+  padding: 25px 30px;
+  text-align: center;
+  z-index: 10; /* Place les contrôles au-dessus de la carte */
+  background-color: rgba(255, 255, 255, 0.85); /* Fond semi-transparent blanc pour la lisibilité */
+  border-radius: 30px; /* Bords arrondis pour le conteneur des contrôles */
+  margin-bottom: 40px; /* Espacement avec le bas de l'écran */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Ombre pour donner de la profondeur */
+  display: flex; /* Utilise Flexbox pour aligner l'input et le bouton */
+  align-items: center; /* Centre verticalement les éléments dans le Flexbox */
+  gap: 15px; /* Espacement entre l'input et le bouton */
+}
+
+.game-controls input {
+  padding: 12px 20px;
+  border: 1px solid #c9d6df; /* Bordure fine */
+  border-radius: 25px; /* Bords arrondis pour l'input */
+  width: 300px; /* Largeur de l'input */
+  font-size: 1.1em;
+  background-color: #f7f9fb;
+  color: #333;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Ombre interne subtile */
+}
+
+.game-controls input::placeholder {
+  color: #888; /* Couleur du texte d'aide */
+}
+
+.game-controls button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  background-color: #4CAF50; /* Couleur verte pour le bouton */
+  color: white;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease; /* Effets de transition pour l'interactivité */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Ombre pour le bouton */
+}
+
+.game-controls button:hover {
+  background-color: #45a049; /* Vert plus foncé au survol */
+  transform: translateY(-1px); /* Léger déplacement vers le haut */
+}
+
+.game-controls button:active {
+  transform: translateY(0); /* Retour à la position normale au clic */
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); /* Ombre interne au clic */
+}
+
+/* Styles pour les informations de débogage (généralement en haut à gauche) */
+.debug-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent foncé */
+  color: #FFF; /* Texte blanc pour le contraste */
+  padding: 15px;
+  border-radius: 8px;
+  z-index: 10;
+  font-size: 1em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.debug-info p {
+  margin: 0 0 5px 0;
+  font-weight: bold;
+}
+.debug-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* Styles pour les messages de feedback (Bonne/Mauvaise réponse) */
+.game-controls p {
+  color: #333; /* Couleur du texte de feedback */
+  font-weight: bold;
+  margin-top: 15px;
+}
