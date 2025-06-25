@@ -9,13 +9,7 @@ html, body, #root {
   font-family: 'Arial', sans-serif; /* Définit une police de caractères par défaut */
   
   /* Couleur de fond des mers/océans et des zones hors de la carte de l'Europe. */
-  /* Inspirée de la couleur foncée des océans sur Google Maps. */
-  background-color: #183040;
-  
-  /* Pour ajouter une texture de vagues aux océans, décommentez et ajustez ces lignes : */
-  /* background-image: url('/public/images/wave-texture.svg'); */
-  /* background-repeat: repeat; */
-  /* background-size: 50px 50px; /* Ajustez la taille de répétition selon votre texture */
+  background-color: #183040; 
 }
 
 /* Style du conteneur principal de l'application React */
@@ -58,17 +52,26 @@ html, body, #root {
 
 /* Styles pour la zone de contrôles (champ de saisie, bouton "Deviner") */
 .game-controls {
-  position: relative; /* Pour que le z-index fonctionne */
-  padding: 25px 30px;
-  text-align: center;
-  z-index: 10; /* Place les contrôles au-dessus de la carte */
-  background-color: rgba(255, 255, 255, 0.85); /* Fond semi-transparent blanc pour la lisibilité */
-  border-radius: 30px; /* Bords arrondis pour le conteneur des contrôles */
-  margin-bottom: 40px; /* Espacement avec le bas de l'écran */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Ombre pour donner de la profondeur */
-  display: flex; /* Utilise Flexbox pour aligner l'input et le bouton */
-  align-items: center; /* Centre verticalement les éléments dans le Flexbox */
-  gap: 15px; /* Espacement entre l'input et le bouton */
+  position: relative;
+  z-index: 10; 
+  background-color: rgba(255, 255, 255, 0.85); 
+  border-radius: 30px; 
+  margin-bottom: 40px; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+  
+  /* MODIFICATION MAJEURE ICI : Utilise Flexbox en colonne pour empiler les sections */
+  display: flex; 
+  flex-direction: column; /* Empile verticalement les enfants (la rangée de boutons, le feedback, le bouton rejouer) */
+  align-items: center; /* Centre horizontalement les enfants dans cette colonne */
+  gap: 15px; /* Espace entre les éléments empilés (par exemple, entre la rangée de boutons et le message de feedback) */
+  padding: 25px 30px; /* Conserve le padding pour le conteneur global */
+}
+
+/* NOUVEAU: Style pour le conteneur qui aligne l'input et les boutons "Deviner" et "Passer" en rangée */
+.game-controls .game-buttons-row {
+    display: flex;
+    align-items: center; /* Centre verticalement les éléments dans cette rangée */
+    gap: 15px; /* Espace entre l'input et les deux boutons */
 }
 
 .game-controls input {
@@ -109,7 +112,15 @@ html, body, #root {
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); /* Ombre interne au clic */
 }
 
-/* Styles pour les informations de débogage (généralement en haut à gauche) */
+/* Ajustement pour le paragraphe de feedback pour qu'il n'ait pas de marge par défaut qui le pousserait */
+.game-controls p {
+    color: #333;
+    font-weight: bold;
+    margin: 0; /* Supprime la marge par défaut pour un meilleur contrôle avec le gap du parent */
+    text-align: center; /* Centre le texte du feedback */
+}
+
+/* Styles pour les informations de débogage (généralement en haut à gauche, bien que non utilisés actuellement) */
 .debug-info {
   position: absolute;
   top: 20px;
@@ -128,11 +139,4 @@ html, body, #root {
 }
 .debug-info p:last-child {
   margin-bottom: 0;
-}
-
-/* Styles pour les messages de feedback (Bonne/Mauvaise réponse) */
-.game-controls p {
-  color: #333; /* Couleur du texte de feedback */
-  font-weight: bold;
-  margin-top: 15px;
 }

@@ -1,117 +1,63 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import MapChart from './components/game/MapChart/MapChart';
-import './App.css';
-
-// --- Définition des pays européens (sans coordonnées pour les micro-états ici) ---
-const EUROPEAN_COUNTRIES = [
-    { name: "Allemagne", isoCode: "DEU" },
-    { name: "France", isoCode: "FRA" },
-    { name: "Italie", isoCode: "ITA" },
-    { name: "Espagne", isoCode: "ESP" },
-    { name: "Pologne", isoCode: "POL" },
-    { name: "Royaume-Uni", isoCode: "GBR" },
-    { name: "Suède", isoCode: "SWE" },
-    { name: "Norvège", isoCode: "NOR" },
-    { name: "Finlande", isoCode: "FIN" },
-    { name: "Autriche", isoCode: "AUT" },
-    { name: "Belgique", isoCode: "BEL" },
-    { name: "Pays-Bas", isoCode: "NLD" },
-    { name: "Suisse", isoCode: "CHE" },
-    { name: "Irlande", isoCode: "IRL" },
-    { name: "Portugal", isoCode: "PRT" },
-    { name: "Grèce", isoCode: "GRC" },
-    { name: "Danemark", isoCode: "DNK" },
-    { name: "Tchéquie", isoCode: "CZE" }, 
-    { name: "Hongrie", isoCode: "HUN" },
-    { name: "Croatie", isoCode: "HRV" },
-    { name: "Slovaquie", isoCode: "SVK" },
-    { name: "Slovénie", isoCode: "SVN" },
-    { name: "Bosnie-Herzégovine", isoCode: "BIH" },
-    { name: "Serbie", isoCode: "SRB" },
-    { name: "Albanie", isoCode: "ALB" },
-    { name: "Bulgarie", isoCode: "BGR" },
-    { name: "Roumanie", isoCode: "ROU" },
-    { name: "Ukraine", isoCode: "UKR" },
-    { name: "Biélorussie", isoCode: "BLR" },
-    { name: "Lituanie", isoCode: "LTU" },
-    { name: "Lettonie", isoCode: "LVA" },
-    { name: "Estonie", isoCode: "EST" },
-    { name: "Islande", isoCode: "ISL" },
-    { name: "Luxembourg", isoCode: "LUX" },
-    { name: "Chypre", isoCode: "CYP" },
-    { name: "Malte", isoCode: "MLT" },
-    { name: "Kosovo", isoCode: "XKX" }, 
-    { name: "Monténégro", isoCode: "MNE" },
-    { name: "Macédoine du Nord", isoCode: "MKD" },
-    { name: "Moldavie", isoCode: "MDA" }
-];
-
-// Pas de liste MICRO_STATES_ISO définie ici, car la logique est retirée de MapChart.
+import { useGameLogic } from './hooks/useGameLogic'; 
+import './App.css'; 
 
 function App() {
-    const [currentCountry, setCurrentCountry] = useState(null); 
-    const [guessedCountries, setGuessedCountries] = useState([]); 
-    const [guessInput, setGuessInput] = useState(''); 
-    const [feedbackMessage, setFeedbackMessage] = useState(''); 
-
-    const selectNewCountry = () => {
-        const availableCountries = EUROPEAN_COUNTRIES.filter(
-            country => !guessedCountries.some(gc => gc.isoCode === country.isoCode)
-        );
-
-        if (availableCountries.length > 0) {
-            const randomIndex = Math.floor(Math.random() * availableCountries.length);
-            setCurrentCountry(availableCountries[randomIndex]);
-            setFeedbackMessage(''); 
-        } else {
-            setCurrentCountry(null); 
-            setFeedbackMessage('Félicitations ! Vous avez deviné tous les pays !');
-        }
-    };
-
-    useEffect(() => {
-        selectNewCountry();
-    }, []); 
-
-    const handleGuess = () => {
-        if (!currentCountry || !guessInput.trim()) {
-            setFeedbackMessage("Veuillez saisir un nom de pays.");
-            return;
-        }
-
-        const normalizedGuess = guessInput.trim().toLowerCase();
-        const normalizedCountryName = currentCountry.name.toLowerCase();
-
-        if (normalizedGuess === normalizedCountryName) {
-            setFeedbackMessage(`Bonne réponse ! C'était ${currentCountry.name}.`);
-            setGuessedCountries([...guessedCountries, currentCountry]); 
-            setGuessInput(''); 
-            setTimeout(() => {
-                selectNewCountry();
-            }, 500); 
-        } else {
-            setFeedbackMessage(`Faux. Ce n'est pas ${guessInput.trim()}.`);
-        }
-    };
-
-    const handleKeyPress = (event) => {
-        if (event.key === 'Enter') {
-            handleGuess();
-        }
-    };
+    const {
+        currentCountry,
+        guessedCountries,
+        guessInput,
+        setGuessInput,
+        feedbackMessage,
+        handleGuess,
+        handleKeyPress,
+        handleSkip, 
+        handleHint, 
+        hint, 
+        timeLeft,
+        formatTime,
+        gameEnded,
+        resetGame,
+        totalCountries,
+        gameTimeSeconds, 
+    } = useGameLogic();
 
     return (
         <div className="App">
             <div className="game-header">
-                <h1>Mon Jeu de Cartes Européen (PoC)</h1>
-                <div className="debug-info">
-                    {currentCountry ? (
-                        <p>Pays Actuel à deviner (PoC): {currentCountry.name} ({currentCountry.isoCode})</p>
-                    ) : (
-                        <p>Chargement du pays...</p>
-                    )}
-                    <p>Pays déjà devinés (PoC): {guessedCountries.map(c => c.name).join(', ') || 'Aucun'}</p>
+                <h1></h1> 
+                <div className="score-display" style={{ 
+                    position: 'absolute', 
+                    top: '20px', 
+                    right: '20px', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+                    padding: '10px 15px', 
+                    borderRadius: '15px', 
+                    color: '#FFF', 
+                    fontWeight: 'bold',
+                    fontSize: '1.2em',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                }}>
+                    Score: {guessedCountries.length} / {totalCountries}
+                </div>
+                <div className="timer-display" style={{ 
+                    position: 'absolute', 
+                    top: '20px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+                    padding: '10px 15px', 
+                    borderRadius: '15px', 
+                    color: '#FFF', 
+                    fontWeight: 'bold',
+                    fontSize: '1.8em', 
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                    minWidth: '100px', 
+                    textAlign: 'center'
+                }}>
+                    {formatTime(timeLeft)}
                 </div>
             </div>
 
@@ -119,22 +65,127 @@ function App() {
                 <MapChart 
                     currentCountry={currentCountry} 
                     guessedCountries={guessedCountries} 
-                    // Les props allEuropeanCountries et microStatesIso ne sont plus passées
                 />
             </div>
 
             <div className="game-controls">
-                <input
-                    type="text"
-                    placeholder="Entrez le nom du pays..."
-                    value={guessInput}
-                    onChange={(e) => setGuessInput(e.target.value)}
-                    onKeyPress={handleKeyPress} 
-                    disabled={!currentCountry} 
-                />
-                <button onClick={handleGuess} disabled={!currentCountry}>Deviner</button>
+                {/* Affiche le message de feedback */}
                 {feedbackMessage && <p>{feedbackMessage}</p>}
-            </div>
+                
+                {/* Affiche l'indice si disponible */}
+                {hint && (
+                    <p style={{
+                        marginTop: '10px', 
+                        color: '#4CAF50', 
+                        fontStyle: 'italic',
+                        fontSize: '1.1em'
+                    }}>{hint}</p>
+                )}
+
+                {/* Affiche les contrôles de jeu actifs (input + Deviner + Passer + Indice) si le jeu n'est pas terminé et qu'un pays est sélectionné */}
+                {!gameEnded && currentCountry && (
+                    <div className="game-buttons-row"> 
+                        <input
+                            type="text"
+                            placeholder="Entrez le nom du pays..."
+                            value={guessInput}
+                            onChange={(e) => setGuessInput(e.target.value)}
+                            onKeyPress={handleKeyPress} 
+                            disabled={!currentCountry} 
+                        />
+                        <button onClick={handleGuess} disabled={!currentCountry}>Deviner</button> 
+                        <button 
+                            onClick={handleSkip} 
+                            style={{
+                                backgroundColor: '#FFC107', 
+                                color: '#333',
+                                fontWeight: 'bold',
+                                border: 'none',
+                                borderRadius: '25px',
+                                padding: '12px 25px',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.3s ease, transform 0.1s ease',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                            }}
+                            disabled={!currentCountry} 
+                        >
+                            Passer
+                        </button>
+                        <button 
+                            onClick={handleHint} 
+                            style={{
+                                backgroundColor: '#17A2B8', 
+                                color: 'white',
+                                fontWeight: 'bold',
+                                border: 'none',
+                                borderRadius: '25px',
+                                padding: '12px 25px',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.3s ease, transform 0.1s ease',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                            }}
+                            disabled={!currentCountry} 
+                        >
+                            Indice
+                        </button>
+                    </div>
+                )}
+            </div> {/* Fin .game-controls */}
+
+            {/* Écran de fin de partie (Modale/Overlay) */}
+            {gameEnded && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#000000', 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 20, 
+                    color: 'white',
+                    textAlign: 'center'
+                }}>
+                    <div style={{
+                        backgroundColor: '#282828', 
+                        padding: '40px',
+                        borderRadius: '20px',
+                        boxShadow: '0 5px 20px rgba(0,0,0,0.5)',
+                        maxWidth: '90%',
+                        margin: '20px'
+                    }}>
+                        <h2 style={{ fontSize: '2.5em', color: '#FFD700', marginBottom: '20px' }}>
+                            Jeu Terminé !
+                        </h2>
+                        <p style={{ fontSize: '1.5em', marginBottom: '15px' }}>
+                            Vous avez deviné <span style={{color: '#A8D9A7', fontWeight: 'bold'}}>{guessedCountries.length}</span> pays sur <span style={{color: '#FFF', fontWeight: 'bold'}}>{totalCountries}</span>.
+                        </p>
+                        <p style={{ fontSize: '1.2em', marginBottom: '30px' }}>
+                            Temps écoulé : <span style={{color: '#FF4D4D', fontWeight: 'bold'}}>{formatTime(gameTimeSeconds - timeLeft)}</span>
+                        </p>
+                        <button 
+                            onClick={resetGame} 
+                            style={{
+                                backgroundColor: '#007bff',
+                                borderRadius: '30px', 
+                                padding: '15px 40px', 
+                                color: 'white',
+                                fontWeight: 'bold',
+                                fontSize: '1.3em',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.3s ease, transform 0.1s ease',
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                            }}
+                        >
+                            Rejouer
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
