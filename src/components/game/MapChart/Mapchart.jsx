@@ -16,72 +16,49 @@ const NON_EUROPEAN_COUNTRY_FILL = "#282828";
 const EUROPEAN_DEFAULT_FILL = "#505050"; 
 
 // Le composant MapChart reçoit uniquement currentCountry et guessedCountries
-const MapChart = ({ currentCountry, guessedCountries }) => { 
+const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty = 'ISO_A3', projectionConfig }) => { 
 
-    // Configuration de la projection cartographique (conservée)
-    const projectionConfig = {
-        rotate: [-5.0, -35.0, 0], 
-        scale: 350 
-    };
+    // Utilise la projection passée en prop, sinon une valeur par défaut (Europe)
+    const defaultProjection = { rotate: [-5.0, -35.0, 0], scale: 350 };
+    const projConfig = projectionConfig || defaultProjection;
 
     // Fonction qui détermine le style (couleur, bordure) de chaque entité géographique.
     // La logique des micro-états n'est plus présente ici.
     const getCountryStyle = (geo) => {
-        const isGuessed = guessedCountries.some(c => c.isoCode === geo.properties.ISO_A3);
-        const isCurrent = currentCountry && currentCountry.isoCode === geo.properties.ISO_A3;
+        const geoId = String(geo.properties[geoIdProperty]);
+        const isGuessed = guessedCountries.some(c => String(c.code) === geoId || String(c.isoCode) === geoId);
+        const isCurrent = currentCountry && (String(currentCountry.code) === geoId || String(currentCountry.isoCode) === geoId);
 
-        const isEuropeanCountry = geo.properties.SUBREGION && EUROPEAN_SUBREGIONS.includes(geo.properties.SUBREGION);
-        
         if (isCurrent) {
-            const currentCountryFillColor = "#FF4D4D"; 
-            const currentCountryStrokeColor = "#CC0000"; 
-            const currentCountryStrokeWidth = 0.5; 
-
+            const style = { 
+                fill: "#FF4D4D",
+                stroke: "transparent",
+                strokeWidth: 0,
+                outline: "none",
+                strokeOpacity: 0
+            };
             return {
-                default: { 
-                    fill: currentCountryFillColor, 
-                    stroke: currentCountryStrokeColor, 
-                    strokeWidth: currentCountryStrokeWidth, 
-                    outline: "none",
-                    filter: "url(#redBorderGlow)" 
-                },
-                hover: { 
-                    fill: currentCountryFillColor, 
-                    stroke: currentCountryStrokeColor, 
-                    strokeWidth: currentCountryStrokeWidth, 
-                    outline: "none",
-                    filter: "url(#redBorderGlow)" 
-                },
-                pressed: { 
-                    fill: "#E42", 
-                    stroke: currentCountryStrokeColor, 
-                    strokeWidth: currentCountryStrokeWidth, 
-                    outline: "none",
-                    filter: "url(#redBorderGlow)" 
-                }
+                default: style,
+                hover: style,
+                pressed: style
             };
         } 
         else if (isGuessed) {
+            const style = { fill: "#A8D9A7", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" };
             return {
-                default: { fill: "#A8D9A7", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" },
-                hover: { fill: "#A8D9A7", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" },
-                pressed: { fill: "#A8D9A7", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" }
+                default: style,
+                hover: style,
+                pressed: style
             };
         }
 
-        if (isEuropeanCountry) {
-            return {
-                default: { fill: EUROPEAN_DEFAULT_FILL, stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" }, 
-                hover: { fill: "#F53", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" }, 
-                pressed: { fill: "#E42", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" }
-            };
-        } else {
-            return {
-                default: { fill: NON_EUROPEAN_COUNTRY_FILL, stroke: "none", outline: "none" }, 
-                hover: { fill: NON_EUROPEAN_COUNTRY_FILL, stroke: "none", outline: "none" }, 
-                pressed: { fill: NON_EUROPEAN_COUNTRY_FILL, stroke: "none", outline: "none" } 
-            };
-        }
+        // Style par défaut pour toutes les autres entités (régions non devinées)
+        const style = { fill: '#505050', stroke: '#FFFFFF', strokeWidth: 0.5, outline: 'none' };
+        return {
+            default: style,
+            hover: style,
+            pressed: style
+        };
     };
 
     // --- GESTION DE L'ÉTAT DE CHARGEMENT ---
@@ -91,21 +68,13 @@ const MapChart = ({ currentCountry, guessedCountries }) => {
 
     return (
         <div style={{ width: "100%", height: "100%" }}>
-            <ComposableMap projection="geoAzimuthalEqualArea" projectionConfig={projectionConfig}>
+            <ComposableMap projection="geoAzimuthalEqualArea" projectionConfig={projConfig}>
                 <defs>
-                    <filter id="redBorderGlow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow 
-                            dx="0" 
-                            dy="0" 
-                            stdDeviation="2.5" 
-                            floodColor="#CC0000" 
-                            floodOpacity="1" 
-                        />
-                    </filter>
+                    {/* Suppression du filtre redBorderGlow car il n'est plus utilisé */}
                 </defs>
 
                 {/* Retour à une seule instance de Geographies, sans logique de Circle */}
-                <Geographies geography="/geojson/europe.json">
+                <Geographies geography={geoJsonPath}>
                     {({ geographies }) =>
                         geographies.map(geo => (
                             <Geography
