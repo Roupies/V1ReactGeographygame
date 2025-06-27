@@ -14,14 +14,14 @@ export const GAME_MODES = {
     projectionConfig: { rotate: [-5, -35, 0], scale: 350 },
   },
   franceRegions: {
-    label: "Régions de France",
+    label: "Régions de France métropolitaine",
     entities: FRENCH_REGIONS,
     geoJson: '/geojson/regions.geojson',
     getName: entity => entity.name,
     getAltNames: entity => entity.altNames || [],
     unitLabel: 'régions',
     geoIdProperty: 'code',
-    projectionConfig: { rotate: [-2, -44, 0], scale: 1800 },
+    projectionConfig: { rotate: [-2, -43, 0], scale: 1800 },
   },
   // Tu pourras ajouter d'autres modes ici plus tard
 }; 

@@ -1,18 +1,15 @@
 export const FRENCH_REGIONS = [
-  {
-    name: 'Île-de-France',
-    code: '11',
-    altNames: ['Ile de France', 'Paris'],
-  },
-  {
-    name: 'Provence-Alpes-Côte d’Azur',
-    code: '93',
-    altNames: ['PACA', 'Provence Alpes Cote d Azur'],
-  },
-  {
-    name: 'Auvergne-Rhône-Alpes',
-    code: '84',
-    altNames: ['Auvergne Rhone Alpes'],
-  },
-  // ... Ajoute les autres régions ici
+  { name: 'Auvergne-Rhône-Alpes', code: '84' },
+  { name: 'Bourgogne-Franche-Comté', code: '27' },
+  { name: 'Bretagne', code: '53' },
+  { name: 'Centre-Val de Loire', code: '24' },
+  { name: 'Corse', code: '94' },
+  { name: 'Grand Est', code: '44' },
+  { name: 'Hauts-de-France', code: '32' },
+  { name: 'Île-de-France', code: '11' },
+  { name: 'Normandie', code: '28' },
+  { name: 'Nouvelle-Aquitaine', code: '75' },
+  { name: 'Occitanie', code: '76' },
+  { name: 'Pays de la Loire', code: '52' },
+  { name: 'Provence-Alpes-Côte d’Azur', code: '93' },
 ]; 

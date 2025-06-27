@@ -2,6 +2,7 @@
 import React from "react";
 // Importez uniquement ComposableMap, Geographies, Geography
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"; 
+import { EUROPEAN_COUNTRIES } from '../../../data/countries';
 
 const EUROPEAN_SUBREGIONS = [
     "Western Europe",
@@ -12,7 +13,7 @@ const EUROPEAN_SUBREGIONS = [
 ];
 
 // Couleurs utilisées précédemment
-const NON_EUROPEAN_COUNTRY_FILL = "#282828"; 
+const NON_EUROPEAN_COUNTRY_FILL = "#232323"; // Gris très sombre, proche du screenshot
 const EUROPEAN_DEFAULT_FILL = "#505050"; 
 
 // Le composant MapChart reçoit uniquement currentCountry et guessedCountries
@@ -21,6 +22,9 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
     // Utilise la projection passée en prop, sinon une valeur par défaut (Europe)
     const defaultProjection = { rotate: [-5.0, -35.0, 0], scale: 350 };
     const projConfig = projectionConfig || defaultProjection;
+
+    // Liste des codes des pays d'Europe (pour le mode Europe)
+    const europeanCountryCodes = EUROPEAN_COUNTRIES.map(c => String(c.isoCode));
 
     // Fonction qui détermine le style (couleur, bordure) de chaque entité géographique.
     // La logique des micro-états n'est plus présente ici.
@@ -52,7 +56,38 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
             };
         }
 
-        // Style par défaut pour toutes les autres entités (régions non devinées)
+        // --- LOGIQUE SPÉCIFIQUE AU MODE EUROPE ---
+        // Si le geoId est dans la liste des pays d'Europe, couleur Europe, sinon couleur hors Europe
+        if (geoIdProperty === 'ISO_A3') {
+            const isEuropean = europeanCountryCodes.includes(geoId);
+            if (isEuropean) {
+                const style = {
+                    fill: EUROPEAN_DEFAULT_FILL,
+                    stroke: "#FFFFFF",
+                    strokeWidth: 0.5,
+                    outline: "none"
+                };
+                return {
+                    default: style,
+                    hover: style,
+                    pressed: style
+                };
+            } else {
+                const style = {
+                    fill: NON_EUROPEAN_COUNTRY_FILL,
+                    stroke: "none",
+                    strokeWidth: 0,
+                    outline: "none"
+                };
+                return {
+                    default: style,
+                    hover: style,
+                    pressed: style
+                };
+            }
+        }
+
+        // --- LOGIQUE PAR DÉFAUT (régions, etc.) ---
         const style = { fill: '#505050', stroke: '#FFFFFF', strokeWidth: 0.5, outline: 'none' };
         return {
             default: style,

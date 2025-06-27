@@ -2,51 +2,55 @@
 
 // Fonction utilitaire pour normaliser les chaînes de caractères (minuscules, sans accents, trim)
 export const normalizeString = (str) => {
-    // Convertit les caractères accentués en leur équivalent non accentué, puis supprime les marques diacritiques
-    // Met tout en minuscules et supprime les espaces inutiles.
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // accents
+        .replace(/[-'`.]/g, " ")        // tirets, apostrophes, points → espace
+        .replace(/\s+/g, " ")            // espaces multiples → un seul
+        .toLowerCase()
+        .trim();
 };
 
 // Définition des pays européens avec noms alternatifs en français optimisés
 export const EUROPEAN_COUNTRIES = [
-    { name: "Allemagne", isoCode: "DEU", altNames: [] },
-    { name: "France", isoCode: "FRA", altNames: [] },
-    { name: "Italie", isoCode: "ITA", altNames: [] },
-    { name: "Espagne", isoCode: "ESP", altNames: [] },
-    { name: "Pologne", isoCode: "POL", altNames: [] },
-    { name: "Royaume-Uni", isoCode: "GBR", altNames: ["royaume uni"] }, 
-    { name: "Suède", isoCode: "SWE", altNames: [] }, 
-    { name: "Norvège", isoCode: "NOR", altNames: [] }, 
-    { name: "Finlande", isoCode: "FIN", altNames: [] },
-    { name: "Autriche", isoCode: "AUT", altNames: [] },
-    { name: "Belgique", isoCode: "BEL", altNames: [] },
+    { name: "Allemagne", isoCode: "DEU" },
+    { name: "France", isoCode: "FRA" },
+    { name: "Italie", isoCode: "ITA" },
+    { name: "Espagne", isoCode: "ESP" },
+    { name: "Pologne", isoCode: "POL" },
+    { name: "Royaume-Uni", isoCode: "GBR" },
+    { name: "Suède", isoCode: "SWE" },
+    { name: "Norvège", isoCode: "NOR" },
+    { name: "Finlande", isoCode: "FIN" },
+    { name: "Autriche", isoCode: "AUT" },
+    { name: "Belgique", isoCode: "BEL" },
     { name: "Pays-Bas", isoCode: "NLD", altNames: ["hollande"] },
-    { name: "Suisse", isoCode: "CHE", altNames: [] },
-    { name: "Irlande", isoCode: "IRL", altNames: [] },
-    { name: "Portugal", isoCode: "PRT", altNames: [] },
-    { name: "Grèce", isoCode: "GRC", altNames: [] }, 
-    { name: "Danemark", isoCode: "DNK", altNames: [] },
-    { name: "Tchéquie", isoCode: "CZE", altNames: ["republique tcheque"] }, 
-    { name: "Hongrie", isoCode: "HUN", altNames: [] },
-    { name: "Croatie", isoCode: "HRV", altNames: [] },
-    { name: "Slovaquie", isoCode: "SVK", altNames: [] },
-    { name: "Slovénie", isoCode: "SVN", altNames: [] },
-    { name: "Bosnie-Herzégovine", isoCode: "BIH", altNames: ["bosnie herzegovine"] },
-    { name: "Serbie", isoCode: "SRB", altNames: [] },
-    { name: "Albanie", isoCode: "ALB", altNames: [] },
-    { name: "Bulgarie", isoCode: "BGR", altNames: [] },
-    { name: "Roumanie", isoCode: "ROU", altNames: [] },
-    { name: "Ukraine", isoCode: "UKR", altNames: [] },
-    { name: "Biélorussie", isoCode: "BLR", altNames: [] }, 
-    { name: "Lituanie", isoCode: "LTU", altNames: [] },
-    { name: "Lettonie", isoCode: "LVA", altNames: [] },
-    { name: "Estonie", isoCode: "EST", altNames: [] },
-    { name: "Islande", isoCode: "ISL", altNames: [] },
-    { name: "Luxembourg", isoCode: "LUX", altNames: [] },
-    { name: "Chypre", isoCode: "CYP", altNames: [] },
-    { name: "Malte", isoCode: "MLT", altNames: [] },
-    { name: "Kosovo", isoCode: "XKX", altNames: [] }, 
-    { name: "Monténégro", isoCode: "MNE", altNames: [] }, 
-    { name: "Macédoine du Nord", isoCode: "MKD", altNames: ["macedoine"] }, 
-    { name: "Moldavie", isoCode: "MDA", altNames: [] }
+    { name: "Suisse", isoCode: "CHE" },
+    { name: "Irlande", isoCode: "IRL" },
+    { name: "Portugal", isoCode: "PRT" },
+    { name: "Grèce", isoCode: "GRC" },
+    { name: "Danemark", isoCode: "DNK" },
+    { name: "Tchéquie", isoCode: "CZE" },
+    { name: "Hongrie", isoCode: "HUN" },
+    { name: "Croatie", isoCode: "HRV" },
+    { name: "Slovaquie", isoCode: "SVK" },
+    { name: "Slovénie", isoCode: "SVN" },
+    { name: "Bosnie-Herzégovine", isoCode: "BIH" },
+    { name: "Serbie", isoCode: "SRB" },
+    { name: "Albanie", isoCode: "ALB" },
+    { name: "Bulgarie", isoCode: "BGR" },
+    { name: "Roumanie", isoCode: "ROU" },
+    { name: "Ukraine", isoCode: "UKR" },
+    { name: "Biélorussie", isoCode: "BLR" },
+    { name: "Lituanie", isoCode: "LTU" },
+    { name: "Lettonie", isoCode: "LVA" },
+    { name: "Estonie", isoCode: "EST" },
+    { name: "Islande", isoCode: "ISL" },
+    { name: "Luxembourg", isoCode: "LUX" },
+    { name: "Chypre", isoCode: "CYP" },
+    { name: "Malte", isoCode: "MLT" },
+    { name: "Kosovo", isoCode: "XKX" },
+    { name: "Monténégro", isoCode: "MNE" },
+    { name: "Macédoine du Nord", isoCode: "MKD", altNames: ["macedoine"] },
+    { name: "Moldavie", isoCode: "MDA" }
 ];

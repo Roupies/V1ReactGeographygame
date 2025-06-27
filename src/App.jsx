@@ -131,7 +131,11 @@ function App() {
                         <input
                             ref={inputRef}
                             type="text"
-                            placeholder={`Entrez le nom du ${gameConfig.unitLabel}...`}
+                            placeholder={
+                              selectedMode === 'franceRegions'
+                                ? 'Entrez le nom de la région...'
+                                : `Entrez le nom du ${gameConfig.unitLabel}...`
+                            }
                             value={guessInput}
                             onChange={(e) => setGuessInput(e.target.value)}
                             onKeyPress={handleKeyPress} 
