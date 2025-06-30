@@ -27,7 +27,11 @@ function App() {
         gameEnded,
         resetGame,
         totalCountries,
-        gameTimeSeconds, 
+        gameTimeSeconds,
+        totalGuesses,
+        hintsUsed,
+        skipsUsed,
+        accuracy
     } = useGameLogic(
         gameConfig?.entities,
         gameConfig?.getName,
@@ -43,17 +47,29 @@ function App() {
         }
     }, [selectedMode]);
 
+    // Focus automatique dans l'input à l'arrivée sur desktop uniquement (quand le jeu commence)
+    useEffect(() => {
+        // Détection mobile/tablette plus fiable
+        const isMobile = /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(navigator.userAgent) || window.innerWidth < 1024;
+        if (!isMobile && selectedMode && inputRef.current && !gameEnded) {
+            // Attendre que l'input soit monté
+            setTimeout(() => {
+                inputRef.current && inputRef.current.focus();
+            }, 100);
+        }
+    }, [selectedMode, gameEnded]);
+
     const handleSkipWithFocus = () => {
         handleSkip();
-        if (inputRef.current) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current) inputRef.current.focus();
     };
     const handleHintWithFocus = () => {
         handleHint();
-        if (inputRef.current) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current) inputRef.current.focus();
     };
     const handleGuessWithFocus = () => {
         handleGuess();
-        if (inputRef.current && !gameEnded) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current && !gameEnded) inputRef.current.focus();
     };
 
     // Fonction pour revenir à l'accueil (choix du mode)
@@ -62,6 +78,17 @@ function App() {
     // Rendu conditionnel APRÈS les hooks
     if (!selectedMode) {
         return <HomeScreen onSelectMode={setSelectedMode} />;
+    }
+
+    // --- Projection dynamique pour la responsivité (zoom Europe) ---
+    let projectionConfig = gameConfig?.projectionConfig;
+    if (selectedMode === 'europe' && projectionConfig) {
+        const isMobileOrTablet = window.innerWidth < 1024;
+        projectionConfig = {
+            ...projectionConfig,
+            scale: isMobileOrTablet ? 800 : projectionConfig.scale,
+            rotate: isMobileOrTablet ? [projectionConfig.rotate[0], -55, projectionConfig.rotate[2]] : projectionConfig.rotate
+        };
     }
 
     return (
@@ -107,7 +134,7 @@ function App() {
                     guessedCountries={guessedCountries} 
                     geoJsonPath={gameConfig.geoJson}
                     geoIdProperty={gameConfig.geoIdProperty}
-                    projectionConfig={gameConfig.projectionConfig}
+                    projectionConfig={projectionConfig}
                 />
             </div>
 
@@ -214,6 +241,57 @@ function App() {
                         <p style={{ fontSize: '1.2em', marginBottom: '30px' }}>
                             Temps écoulé : <span style={{color: '#FF4D4D', fontWeight: 'bold'}}>{formatTime(gameTimeSeconds - timeLeft)}</span>
                         </p>
+                        
+                        {/* Statistiques détaillées */}
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: '20px', 
+                            marginBottom: '30px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <div style={{ 
+                                backgroundColor: 'rgba(255,255,255,0.1)', 
+                                padding: '10px 15px', 
+                                borderRadius: '10px',
+                                textAlign: 'center',
+                                minWidth: '120px'
+                            }}>
+                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#4CAF50' }}>{accuracy}%</div>
+                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Précision</div>
+                            </div>
+                            <div style={{ 
+                                backgroundColor: 'rgba(255,255,255,0.1)', 
+                                padding: '10px 15px', 
+                                borderRadius: '10px',
+                                textAlign: 'center',
+                                minWidth: '120px'
+                            }}>
+                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#FFC107' }}>{totalGuesses}</div>
+                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Tentatives</div>
+                            </div>
+                            <div style={{ 
+                                backgroundColor: 'rgba(255,255,255,0.1)', 
+                                padding: '10px 15px', 
+                                borderRadius: '10px',
+                                textAlign: 'center',
+                                minWidth: '120px'
+                            }}>
+                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#17A2B8' }}>{hintsUsed}</div>
+                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Indices</div>
+                            </div>
+                            <div style={{ 
+                                backgroundColor: 'rgba(255,255,255,0.1)', 
+                                padding: '10px 15px', 
+                                borderRadius: '10px',
+                                textAlign: 'center',
+                                minWidth: '120px'
+                            }}>
+                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#FF6B6B' }}>{skipsUsed}</div>
+                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Passés</div>
+                            </div>
+                        </div>
+
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px', marginTop: '20px' }}>
                             <button 
                                 onClick={resetGame} 
@@ -260,3 +338,4 @@ function App() {
 }
 
 export default App;
+

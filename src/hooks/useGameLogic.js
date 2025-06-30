@@ -28,6 +28,11 @@ export const useGameLogic = (
     const [guessInput, setGuessInput] = useState(''); 
     const [gameEnded, setGameEnded] = useState(false); 
     const [hint, setHint] = useState(''); 
+    
+    // Nouvelles statistiques
+    const [totalGuesses, setTotalGuesses] = useState(0);
+    const [hintsUsed, setHintsUsed] = useState(0);
+    const [skipsUsed, setSkipsUsed] = useState(0);
 
     const totalCountries = entities.length;
     const { timeLeft, setTimeLeft, formatTime } = useTimer(GAME_TIME_SECONDS, gameEnded);
@@ -39,9 +44,13 @@ export const useGameLogic = (
         setGuessedCountries([]);
         setTimeLeft(GAME_TIME_SECONDS);
         setGuessInput('');
-        setFeedbackMessage('');
-        setHint('');
+        setFeedbackMessage(''); 
+        setHint(''); 
         setGameEnded(false);
+        // Reset des statistiques
+        setTotalGuesses(0);
+        setHintsUsed(0);
+        setSkipsUsed(0);
     };
 
     // Gestion de la fin du temps
@@ -73,6 +82,8 @@ export const useGameLogic = (
             return;
         }
 
+        setTotalGuesses(prev => prev + 1);
+
         const normalizedGuess = normalizeString(guessInput);
         const acceptedNames = [
             normalizeString(getName(currentCountry)),
@@ -81,9 +92,9 @@ export const useGameLogic = (
 
         if (acceptedNames.includes(normalizedGuess)) {
             setFeedbackMessage(`Bonne réponse ! C'était ${getName(currentCountry)}.`);
-            setGuessedCountries([...guessedCountries, currentCountry]);
-            setGuessInput('');
-            setHint('');
+            setGuessedCountries([...guessedCountries, currentCountry]); 
+            setGuessInput(''); 
+            setHint(''); 
             // Retirer l'entité courante de la pile
             setCountriesToGuess(prev => prev.slice(1));
         } else {
@@ -96,9 +107,10 @@ export const useGameLogic = (
             setFeedbackMessage("Le jeu est terminé ou il n'y a pas d'entité à passer.");
             return;
         }
+        setSkipsUsed(prev => prev + 1);
         setFeedbackMessage("");
-        setGuessInput('');
-        setHint('');
+        setGuessInput(''); 
+        setHint(''); 
         // Déplacer l'entité courante à la fin de la pile
         setCountriesToGuess(prev => {
             if (prev.length <= 1) return prev; // rien à faire si une seule entité
@@ -113,11 +125,12 @@ export const useGameLogic = (
             return;
         }
 
-        if (hint) { 
-            setFeedbackMessage("Un indice a déjà été donné pour cette entité.");
+        if (hint) {
+            // Ne rien faire si un indice a déjà été donné
             return;
         }
 
+        setHintsUsed(prev => prev + 1);
         setTimeLeft(prevTime => Math.max(0, prevTime - HINT_PENALTY_SECONDS));
         const firstLetter = getName(currentCountry).charAt(0).toUpperCase();
         setHint(`Indice : La première lettre est "${firstLetter}"`);
@@ -147,5 +160,10 @@ export const useGameLogic = (
         resetGame,
         totalCountries,
         gameTimeSeconds: GAME_TIME_SECONDS,
+        // Nouvelles statistiques
+        totalGuesses,
+        hintsUsed,
+        skipsUsed,
+        accuracy: totalGuesses > 0 ? ((guessedCountries.length / totalGuesses) * 100).toFixed(1) : 0
     };
 };
