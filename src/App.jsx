@@ -39,6 +39,7 @@ function App() {
     );
 
     const inputRef = useRef(null);
+    const mobileInputRef = useRef(null);
 
     // Reset automatique à chaque changement de mode
     useEffect(() => {
@@ -61,15 +62,27 @@ function App() {
 
     const handleSkipWithFocus = () => {
         handleSkip();
-        if (window.innerWidth >= 1024 && inputRef.current) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current) {
+            inputRef.current.focus();
+        } else if (window.innerWidth < 1024 && mobileInputRef.current) {
+            mobileInputRef.current.focus();
+        }
     };
     const handleHintWithFocus = () => {
         handleHint();
-        if (window.innerWidth >= 1024 && inputRef.current) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current) {
+            inputRef.current.focus();
+        } else if (window.innerWidth < 1024 && mobileInputRef.current) {
+            mobileInputRef.current.focus();
+        }
     };
     const handleGuessWithFocus = () => {
         handleGuess();
-        if (window.innerWidth >= 1024 && inputRef.current && !gameEnded) inputRef.current.focus();
+        if (window.innerWidth >= 1024 && inputRef.current && !gameEnded) {
+            inputRef.current.focus();
+        } else if (window.innerWidth < 1024 && mobileInputRef.current && !gameEnded) {
+            mobileInputRef.current.focus();
+        }
     };
 
     // Fonction pour revenir à l'accueil (choix du mode)
@@ -80,15 +93,24 @@ function App() {
         return <HomeScreen onSelectMode={setSelectedMode} />;
     }
 
-    // --- Projection dynamique pour la responsivité (zoom Europe) ---
+    // --- Projection dynamique pour la responsivité (zoom Europe et France) ---
     let projectionConfig = gameConfig?.projectionConfig;
-    if (selectedMode === 'europe' && projectionConfig) {
+    if (projectionConfig) {
         const isMobileOrTablet = window.innerWidth < 1024;
-        projectionConfig = {
-            ...projectionConfig,
-            scale: isMobileOrTablet ? 800 : projectionConfig.scale,
-            rotate: isMobileOrTablet ? [projectionConfig.rotate[0], -55, projectionConfig.rotate[2]] : projectionConfig.rotate
-        };
+        
+        if (selectedMode === 'europe') {
+            projectionConfig = {
+                ...projectionConfig,
+                scale: isMobileOrTablet ? 900 : projectionConfig.scale,
+                rotate: isMobileOrTablet ? [projectionConfig.rotate[0], -50, projectionConfig.rotate[2]] : projectionConfig.rotate
+            };
+        } else if (selectedMode === 'franceRegions') {
+            projectionConfig = {
+                ...projectionConfig,
+                scale: isMobileOrTablet ? 2400 : projectionConfig.scale,
+                rotate: isMobileOrTablet ? [projectionConfig.rotate[0], -46, projectionConfig.rotate[2]] : projectionConfig.rotate
+            };
+        }
     }
 
     return (
@@ -107,7 +129,10 @@ function App() {
                     fontSize: '1.2em',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
                 }}>
-                    Score: {guessedCountries.length} / {totalCountries}
+                    {window.innerWidth < 1024 
+                        ? `${guessedCountries.length}/${totalCountries}` 
+                        : `Score: ${guessedCountries.length} / ${totalCountries}`
+                    }
                 </div>
                 <div className="timer-display" style={{ 
                     position: 'absolute', 
@@ -126,6 +151,18 @@ function App() {
                 }}>
                     {formatTime(timeLeft)}
                 </div>
+                
+                {/* Bouton indice mobile uniquement */}
+                {!gameEnded && currentCountry && (
+                    <button 
+                        className="mobile-hint-button"
+                        onClick={handleHintWithFocus}
+                        disabled={!currentCountry}
+                        title="Indice"
+                    >
+                        ?
+                    </button>
+                )}
             </div>
 
             <div className="map-container">
@@ -152,7 +189,7 @@ function App() {
                     }}>{hint}</p>
                 )}
 
-                {/* Affiche les contrôles de jeu actifs (input + Deviner + Passer + Indice) si le jeu n'est pas terminé et qu'une entité est sélectionnée */}
+                {/* Layout Desktop - ligne avec input + boutons */}
                 {!gameEnded && currentCountry && (
                     <div className="game-buttons-row"> 
                         <input
@@ -204,6 +241,40 @@ function App() {
                             Indice
                         </button>
                     </div>
+                )}
+
+                {/* Layout Mobile - input au-dessus, boutons en ligne */}
+                {!gameEnded && currentCountry && (
+                    <>
+                        <div className="mobile-input-container">
+                            <input
+                                ref={mobileInputRef}
+                                type="text"
+                                placeholder={
+                                  selectedMode === 'franceRegions'
+                                    ? 'Entrez le nom de la région...'
+                                    : `Entrez le nom du ${gameConfig.unitLabel}...`
+                                }
+                                value={guessInput}
+                                onChange={(e) => setGuessInput(e.target.value)}
+                                onKeyPress={handleKeyPress} 
+                                disabled={!currentCountry} 
+                            />
+                        </div>
+                        <div className="mobile-buttons-container">
+                            <button onClick={handleGuessWithFocus} disabled={!currentCountry}>Deviner</button> 
+                            <button 
+                                onClick={handleSkipWithFocus}
+                                style={{
+                                    backgroundColor: '#FFC107', 
+                                    color: '#333',
+                                }}
+                                disabled={!currentCountry} 
+                            >
+                                Passer
+                            </button>
+                        </div>
+                    </>
                 )}
             </div> {/* Fin .game-controls */}
 

@@ -141,11 +141,37 @@ html, body, #root {
   margin-bottom: 0;
 }
 
+/* Styles pour le bouton indice desktop seulement */
+@media (min-width: 1024px) {
+  .mobile-hint-button {
+    display: none !important;
+  }
+  .mobile-input-container,
+  .mobile-buttons-container {
+    display: none !important;
+  }
+}
+
 /* --- RESPONSIVITÉ TABLETTE ET MOBILE --- */
 @media (max-width: 1023px) {
   .App {
     justify-content: flex-start;
   }
+  
+  /* Réduction du score et timer sur mobile */
+  .score-display {
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-size: 1.1em !important;
+  }
+  
+  .timer-display {
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-size: 1.5em !important;
+    min-width: 70px !important;
+  }
+  
   .map-container {
     position: relative;
     width: 100vw;
@@ -159,19 +185,24 @@ html, body, #root {
     width: 100% !important;
     display: block;
   }
+  
+  /* Nouveau layout mobile pour les contrôles */
   .game-controls {
     width: 95vw;
     max-width: 600px;
     margin: 0 auto 20px auto;
     padding: 18px 8px;
     border-radius: 18px;
+    gap: 12px;
   }
-  .game-controls .game-buttons-row {
-    flex-direction: column;
-    gap: 10px;
+  
+  /* Input séparé au-dessus */
+  .mobile-input-container {
     width: 100%;
-    align-items: center;
+    display: flex;
+    justify-content: center;
   }
+  
   .game-controls input {
     width: 100%;
     max-width: 350px;
@@ -180,17 +211,61 @@ html, body, #root {
     padding: 22px 18px;
     box-sizing: border-box;
     border-radius: 32px;
-    margin: 0 auto;
-    display: block;
+    margin: 0;
   }
-  .game-controls button {
+  
+  /* Boutons Deviner et Passer sur la même ligne */
+  .mobile-buttons-container {
+    display: flex;
+    gap: 12px;
     width: 100%;
-    max-width: 350px;
+    justify-content: center;
+  }
+  
+  .game-controls button {
+    flex: 1;
+    max-width: 170px;
     min-width: 0;
     font-size: 1.1em;
-    padding: 12px 0;
+    padding: 12px 8px;
     border-radius: 20px;
-    margin: 0 auto;
+    margin: 0;
+  }
+  
+  /* Bouton indice dans le header mobile */
+  .mobile-hint-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #17A2B8;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease, transform 0.1s ease;
+  }
+  
+  .mobile-hint-button:hover {
+    background-color: #138A9F;
+    transform: scale(1.05);
+  }
+  
+  .mobile-hint-button:active {
+    transform: scale(0.95);
+  }
+  
+  /* Cache le layout desktop sur mobile */
+  .game-controls .game-buttons-row {
+    display: none;
   }
 }
 
@@ -209,27 +284,24 @@ html, body, #root {
   .game-controls {
     width: 99vw;
     max-width: 99vw;
-    padding: 10px 2px;
+    padding: 10px 8px;
     border-radius: 12px;
     margin-bottom: 8px;
   }
   .game-controls input {
-    width: 100%;
-    max-width: 350px;
-    min-width: 0;
     font-size: 1.15em;
     padding: 18px 12px;
-    box-sizing: border-box;
     border-radius: 28px;
-    margin: 0 auto;
-    display: block;
   }
   .game-controls button {
     font-size: 1em;
-    padding: 10px 0;
+    padding: 10px 8px;
     border-radius: 16px;
-    width: 100%;
-    max-width: 350px;
-    margin: 0 auto;
+  }
+  
+  .mobile-hint-button {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
   }
 }
