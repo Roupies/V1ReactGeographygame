@@ -1,5 +1,5 @@
 // src/components/game/MapChart/MapChart.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 // Importez uniquement ComposableMap, Geographies, Geography, Marker
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"; 
 import { EUROPEAN_COUNTRIES } from '../../../data/countries';
@@ -26,12 +26,44 @@ const MARKER_COORDINATES = {
     "VAT": [12.4534, 41.9033], // Vatican
 };
 
+// Configurations de projection par défaut
+const DEFAULT_PROJECTION = { rotate: [-5.0, -35.0, 0], scale: 350 };
+const TABLET_PROJECTION = { 
+    rotate: [-8.0, -50.0, 0],
+    scale: 650, // Dézoom un peu par rapport à 800
+    center: [0, 0]
+};
+const MOBILE_PROJECTION = { 
+    rotate: [-8.0, -50.0, 0], // Même rotation que tablette pour centrer l'Europe
+    scale: 1000,
+    center: [0, 0] // Centré au lieu de décalé vers la droite
+};
+
 // Le composant MapChart reçoit uniquement currentCountry et guessedCountries
 const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty = 'ISO_A3', projectionConfig }) => { 
+    const [currentProjection, setCurrentProjection] = useState(DEFAULT_PROJECTION);
 
-    // Utilise la projection passée en prop, sinon une valeur par défaut (Europe)
-    const defaultProjection = { rotate: [-5.0, -35.0, 0], scale: 350 };
-    const projConfig = projectionConfig || defaultProjection;
+    // Gestion du responsive
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth <= 480) { // Mobile phones
+                setCurrentProjection(MOBILE_PROJECTION);
+            } else if (window.innerWidth <= 768) { // Tablets
+                setCurrentProjection(TABLET_PROJECTION);
+            } else {
+                setCurrentProjection(projectionConfig || DEFAULT_PROJECTION);
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        // Add event listener
+        window.addEventListener('resize', handleResize);
+
+        // Cleanup
+        return () => window.removeEventListener('resize', handleResize);
+    }, [projectionConfig]);
 
     // Liste des codes des pays d'Europe (pour le mode Europe)
     const europeanCountryCodes = EUROPEAN_COUNTRIES.map(c => String(c.isoCode));
@@ -144,8 +176,8 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
     };
 
     return (
-        <div style={{ width: "100%", height: "100%" }}>
-            <ComposableMap projection="geoAzimuthalEqualArea" projectionConfig={projConfig}>
+        <div className="map-container" style={{ width: "100%", height: "100%" }}>
+            <ComposableMap projection="geoAzimuthalEqualArea" projectionConfig={currentProjection}>
                 <defs>
                     {/* Suppression du filtre redBorderGlow car il n'est plus utilisé */}
                 </defs>
@@ -165,6 +197,15 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
 
                 {/* Sphères pour les micro-états et petits pays */}
                 {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
+                    // N'afficher la sphère que si c'est le pays courant
+                    const isCurrent = currentCountry && String(currentCountry.code || currentCountry.isoCode) === entityId;
+                    const isGuessed = guessedCountries.some(c => String(c.code || c.isoCode) === entityId);
+                    
+                    // Afficher seulement si c'est le pays courant ou s'il a déjà été deviné
+                    if (!isCurrent && !isGuessed) {
+                        return null;
+                    }
+                    
                     const markerStyle = getMarkerStyle(entityId);
                     return (
                         <Marker key={entityId} coordinates={coordinates}>

@@ -50,12 +50,12 @@ html, body, #root {
   margin: 0; /* Supprime les marges par défaut du h1 */
 }
 
-/* Styles pour la zone de contrôles (champ de saisie, bouton "Deviner") */
+/* Styles pour la zone de contrôles (champ de saisie, bouton "Valider") */
 .game-controls {
   position: relative;
   z-index: 10; 
   background-color: rgba(255, 255, 255, 0.85); 
-  border-radius: 30px; 
+  border-radius: 25px; 
   margin-bottom: 40px; 
   box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
   
@@ -63,8 +63,8 @@ html, body, #root {
   display: flex; 
   flex-direction: column; /* Empile verticalement les enfants (la rangée de boutons, le feedback, le bouton rejouer) */
   align-items: center; /* Centre horizontalement les enfants dans cette colonne */
-  gap: 15px; /* Espace entre les éléments empilés (par exemple, entre la rangée de boutons et le message de feedback) */
-  padding: 25px 30px; /* Conserve le padding pour le conteneur global */
+  gap: 12px; /* Espace entre les éléments empilés (par exemple, entre la rangée de boutons et le message de feedback) */
+  padding: 18px 22px; /* Conserve le padding pour le conteneur global */
 }
 
 /* NOUVEAU: Style pour le conteneur qui aligne l'input et les boutons "Deviner" et "Passer" en rangée */
@@ -75,11 +75,11 @@ html, body, #root {
 }
 
 .game-controls input {
-  padding: 12px 20px;
+  padding: 10px 18px;
   border: 1px solid #c9d6df; /* Bordure fine */
-  border-radius: 25px; /* Bords arrondis pour l'input */
-  width: 300px; /* Largeur de l'input */
-  font-size: 1.1em;
+  border-radius: 20px; /* Bords arrondis pour l'input */
+  width: 280px; /* Largeur de l'input */
+  font-size: 1em;
   background-color: #f7f9fb;
   color: #333;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Ombre interne subtile */
@@ -90,12 +90,12 @@ html, body, #root {
 }
 
 .game-controls button {
-  padding: 12px 25px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 25px;
+  border-radius: 20px;
   background-color: #4CAF50; /* Couleur verte pour le bouton */
   color: white;
-  font-size: 1.1em;
+  font-size: 0.9em;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease; /* Effets de transition pour l'interactivité */
@@ -143,9 +143,6 @@ html, body, #root {
 
 /* Styles pour le bouton indice desktop seulement */
 @media (min-width: 1024px) {
-  .mobile-hint-button {
-    display: none !important;
-  }
   .mobile-input-container,
   .mobile-buttons-container {
     display: none !important;
@@ -160,16 +157,26 @@ html, body, #root {
   
   /* Réduction du score et timer sur mobile */
   .score-display {
-    padding: 8px 12px !important;
-    border-radius: 12px !important;
-    font-size: 1.1em !important;
+    padding: 6px 8px !important;
+    border-radius: 10px !important;
+    font-size: 0.9em !important;
+    /* S'assurer qu'ils restent dans la bande du haut */
+    max-width: 18vw !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   
   .timer-display {
-    padding: 8px 12px !important;
-    border-radius: 12px !important;
-    font-size: 1.5em !important;
-    min-width: 70px !important;
+    padding: 6px 8px !important;
+    border-radius: 10px !important;
+    font-size: 0.9em !important;
+    min-width: 50px !important;
+    /* S'assurer qu'ils restent dans la bande du haut */
+    max-width: 18vw !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   
   .map-container {
@@ -191,9 +198,9 @@ html, body, #root {
     width: 95vw;
     max-width: 600px;
     margin: 0 auto 20px auto;
-    padding: 18px 8px;
-    border-radius: 18px;
-    gap: 12px;
+    padding: 15px 8px;
+    border-radius: 15px;
+    gap: 10px;
   }
   
   /* Input séparé au-dessus */
@@ -207,60 +214,29 @@ html, body, #root {
     width: 100%;
     max-width: 350px;
     min-width: 0;
-    font-size: 1.25em;
-    padding: 22px 18px;
+    font-size: 1.2em;
+    padding: 18px 15px;
     box-sizing: border-box;
-    border-radius: 32px;
+    border-radius: 25px;
     margin: 0;
   }
   
-  /* Boutons Deviner et Passer sur la même ligne */
+  /* Boutons Passer, Indice et Valider sur la même ligne */
   .mobile-buttons-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
     justify-content: center;
   }
   
   .game-controls button {
     flex: 1;
-    max-width: 170px;
+    max-width: 110px;
     min-width: 0;
-    font-size: 1.1em;
-    padding: 12px 8px;
-    border-radius: 20px;
+    font-size: 1em;
+    padding: 10px 6px;
+    border-radius: 18px;
     margin: 0;
-  }
-  
-  /* Bouton indice dans le header mobile */
-  .mobile-hint-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: #17A2B8;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2em;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 15;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    transition: background-color 0.3s ease, transform 0.1s ease;
-  }
-  
-  .mobile-hint-button:hover {
-    background-color: #138A9F;
-    transform: scale(1.05);
-  }
-  
-  .mobile-hint-button:active {
-    transform: scale(0.95);
   }
   
   /* Cache le layout desktop sur mobile */
@@ -282,26 +258,212 @@ html, body, #root {
     display: block;
   }
   .game-controls {
-    width: 99vw;
-    max-width: 99vw;
-    padding: 10px 8px;
+    width: calc(100vw - 20px) !important; /* Laisse 10px de chaque côté */
+    max-width: calc(100vw - 20px) !important;
+    padding: 12px 8px;
     border-radius: 12px;
-    margin-bottom: 8px;
-  }
-  .game-controls input {
-    font-size: 1.15em;
-    padding: 18px 12px;
-    border-radius: 28px;
-  }
-  .game-controls button {
-    font-size: 1em;
-    padding: 10px 8px;
-    border-radius: 16px;
+    margin: 0 10px 8px 10px; /* Centre avec marge de sécurité */
+    box-sizing: border-box !important;
   }
   
-  .mobile-hint-button {
-    width: 35px;
-    height: 35px;
-    font-size: 1em;
+  .mobile-input-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .game-controls input {
+    width: calc(100% - 20px) !important; /* Soustrait le padding interne */
+    max-width: calc(100% - 20px) !important;
+    font-size: 1.1em;
+    padding: 15px 10px !important; /* Réduit le padding horizontal */
+    border-radius: 22px;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+  
+  .mobile-buttons-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 6px !important; /* Réduit l'espace entre boutons */
+  }
+  
+  .game-controls button {
+    font-size: 0.85em !important; /* Réduit encore la taille */
+    padding: 8px 3px !important; /* Réduit le padding */
+    border-radius: 14px;
+    max-width: none !important; /* Enlève la limite max-width */
+    flex: 1 !important; /* Assure que les boutons se partagent l'espace */
+    min-width: 0 !important; /* Permet aux boutons de rétrécir */
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* Ajustements spéciaux pour très petits écrans */
+  .timer-display {
+    left: 15% !important;
+    padding: 4px 6px !important;
+    font-size: 0.8em !important;
+    max-width: 25vw !important;
+    min-width: 40px !important;
+  }
+  
+  .score-display {
+    left: 85% !important;
+    padding: 4px 6px !important;
+    font-size: 0.8em !important;
+    max-width: 25vw !important;
+  }
+}
+
+/* Styles pour la carte sur mobile */
+@media screen and (max-width: 768px) {
+  .map-container {
+    height: calc(100vh - 120px); /* Ajuste la hauteur en tenant compte du header */
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .map-container svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Styles responsive pour HomeScreen et écran de fin */
+@media screen and (max-width: 768px) {
+  /* HomeScreen responsive */
+  .home-screen-title {
+    font-size: 2em !important;
+    padding: 0 20px !important;
+  }
+  
+  .home-screen-buttons {
+    flex-direction: column !important;
+    gap: 16px !important;
+    max-width: 300px !important;
+  }
+  
+  .home-screen-button {
+    width: 100% !important;
+    padding: 20px 30px !important;
+    font-size: 1.2em !important;
+    min-width: 200px !important;
+  }
+  
+  /* Écran de fin responsive */
+  .end-game-overlay {
+    padding: 5px !important;
+    box-sizing: border-box !important;
+  }
+  
+  .end-game-modal {
+    padding: 15px !important;
+    border-radius: 15px !important;
+    max-width: calc(100vw - 20px) !important; /* Évite le débordement */
+    width: calc(100vw - 20px) !important;
+    margin: 10px !important;
+    max-height: calc(100vh - 40px) !important; /* Évite le débordement vertical */
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+  
+  .end-game-title {
+    font-size: 1.6em !important; /* Réduit encore pour mobile */
+    margin-bottom: 12px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .end-game-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important; /* Réduit l'espace */
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .end-game-stat-item {
+    padding: 6px 8px !important; /* Réduit le padding */
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  
+  .end-game-button {
+    width: calc(100% - 20px) !important; /* Évite le débordement */
+    max-width: calc(100% - 20px) !important;
+    padding: 10px 20px !important; /* Réduit le padding */
+    font-size: 1em !important; /* Réduit la taille de police */
+    border-radius: 20px !important;
+    margin: 0 10px !important; /* Centre avec marge */
+    box-sizing: border-box !important;
+  }
+}
+
+/* Styles spéciaux pour très petits écrans */
+@media screen and (max-width: 480px) {
+  .end-game-modal {
+    padding: 10px !important;
+    max-width: calc(100vw - 10px) !important;
+    width: calc(100vw - 10px) !important;
+    margin: 5px !important;
+  }
+  
+  .end-game-title {
+    font-size: 1.4em !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .end-game-stats-grid {
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .end-game-stat-item {
+    padding: 4px 6px !important;
+  }
+  
+  .end-game-button {
+    width: calc(100% - 10px) !important;
+    max-width: calc(100% - 10px) !important;
+    padding: 8px 15px !important;
+    font-size: 0.9em !important;
+    margin: 0 5px !important;
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  /* Styles pour tablettes */
+  .home-screen-title {
+    font-size: 2.5em !important;
+  }
+  
+  .home-screen-button {
+    padding: 25px 35px !important;
+    font-size: 1.3em !important;
+    min-width: 200px !important;
+  }
+  
+  .end-game-modal {
+    padding: 30px !important;
+  }
+  
+  .end-game-title {
+    font-size: 2.2em !important;
+  }
+  
+  .end-game-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+  }
+  
+  .end-game-button {
+    padding: 13px 35px !important;
+    font-size: 1.2em !important;
   }
 }

@@ -117,11 +117,29 @@ function App() {
         <div className="App">
             <div className="game-header">
                 <h1></h1> 
+                <div className="timer-display" style={{ 
+                    position: 'absolute', 
+                    top: '20px', 
+                    left: '25%', 
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#17A2B8', 
+                    padding: '10px 15px', 
+                    borderRadius: '15px', 
+                    color: '#FFF', 
+                    fontWeight: 'bold',
+                    fontSize: '1.2em', 
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                    minWidth: '100px', 
+                    textAlign: 'center'
+                }}>
+                    {formatTime(timeLeft)}
+                </div>
                 <div className="score-display" style={{ 
                     position: 'absolute', 
                     top: '20px', 
-                    right: '20px', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+                    left: '75%', 
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#4CAF50', 
                     padding: '10px 15px', 
                     borderRadius: '15px', 
                     color: '#FFF', 
@@ -134,35 +152,6 @@ function App() {
                         : `Score: ${guessedCountries.length} / ${totalCountries}`
                     }
                 </div>
-                <div className="timer-display" style={{ 
-                    position: 'absolute', 
-                    top: '20px', 
-                    left: '50%', 
-                    transform: 'translateX(-50%)', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
-                    padding: '10px 15px', 
-                    borderRadius: '15px', 
-                    color: '#FFF', 
-                    fontWeight: 'bold',
-                    fontSize: '1.8em', 
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                    minWidth: '100px', 
-                    textAlign: 'center'
-                }}>
-                    {formatTime(timeLeft)}
-                </div>
-                
-                {/* Bouton indice mobile uniquement */}
-                {!gameEnded && currentCountry && (
-                    <button 
-                        className="mobile-hint-button"
-                        onClick={handleHintWithFocus}
-                        disabled={!currentCountry}
-                        title="Indice"
-                    >
-                        ?
-                    </button>
-                )}
             </div>
 
             <div className="map-container">
@@ -205,7 +194,6 @@ function App() {
                             onKeyPress={handleKeyPress} 
                             disabled={!currentCountry} 
                         />
-                        <button onClick={handleGuessWithFocus} disabled={!currentCountry}>Deviner</button> 
                         <button 
                             onClick={handleSkipWithFocus}
                             style={{
@@ -213,11 +201,12 @@ function App() {
                                 color: '#333',
                                 fontWeight: 'bold',
                                 border: 'none',
-                                borderRadius: '25px',
-                                padding: '12px 25px',
+                                borderRadius: '20px',
+                                padding: '8px 16px',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.3s ease, transform 0.1s ease',
                                 boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                fontSize: '0.9em'
                             }}
                             disabled={!currentCountry} 
                         >
@@ -230,16 +219,18 @@ function App() {
                                 color: 'white',
                                 fontWeight: 'bold',
                                 border: 'none',
-                                borderRadius: '25px',
-                                padding: '12px 25px',
+                                borderRadius: '20px',
+                                padding: '8px 16px',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.3s ease, transform 0.1s ease',
                                 boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                fontSize: '0.9em'
                             }}
                             disabled={!currentCountry} 
                         >
-                            Indice
+                            ?
                         </button>
+                        <button onClick={handleGuessWithFocus} disabled={!currentCountry}>Valider</button> 
                     </div>
                 )}
 
@@ -262,7 +253,6 @@ function App() {
                             />
                         </div>
                         <div className="mobile-buttons-container">
-                            <button onClick={handleGuessWithFocus} disabled={!currentCountry}>Deviner</button> 
                             <button 
                                 onClick={handleSkipWithFocus}
                                 style={{
@@ -273,6 +263,17 @@ function App() {
                             >
                                 Passer
                             </button>
+                            <button 
+                                onClick={handleHintWithFocus}
+                                style={{
+                                    backgroundColor: '#17A2B8', 
+                                    color: 'white',
+                                }}
+                                disabled={!currentCountry} 
+                            >
+                                ?
+                            </button>
+                            <button onClick={handleGuessWithFocus} disabled={!currentCountry}>Valider</button> 
                         </div>
                     </>
                 )}
@@ -280,7 +281,7 @@ function App() {
 
             {/* Écran de fin de partie (Modale/Overlay) */}
             {gameEnded && (
-                <div style={{
+                <div className="end-game-overlay" style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
@@ -293,109 +294,185 @@ function App() {
                     alignItems: 'center',
                     zIndex: 20, 
                     color: 'white',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    padding: window.innerWidth <= 768 ? '5px' : '20px',
+                    boxSizing: 'border-box'
                 }}>
-                    <div style={{
+                    <div className="end-game-modal" style={{
                         backgroundColor: '#282828', 
-                        padding: '40px',
-                        borderRadius: '20px',
+                        padding: window.innerWidth <= 480 ? '10px' : 
+                                window.innerWidth <= 768 ? '15px' : '40px',
+                        borderRadius: window.innerWidth <= 480 ? '15px' : '20px',
                         boxShadow: '0 5px 20px rgba(0,0,0,0.5)',
-                        maxWidth: '90%',
-                        margin: '20px'
+                        maxWidth: window.innerWidth <= 480 ? 'calc(100vw - 10px)' : 
+                                 window.innerWidth <= 768 ? 'calc(100vw - 20px)' : '90%',
+                        width: window.innerWidth <= 480 ? 'calc(100vw - 10px)' : 
+                               window.innerWidth <= 768 ? 'calc(100vw - 20px)' : '100%',
+                        maxHeight: window.innerWidth <= 480 ? 'calc(100vh - 20px)' : 'calc(100vh - 40px)',
+                        overflowY: 'auto',
+                        margin: window.innerWidth <= 480 ? '5px' : '10px',
+                        boxSizing: 'border-box'
                     }}>
-                        <h2 style={{ fontSize: '2.5em', color: '#FFD700', marginBottom: '20px' }}>
+                        <h2 className="end-game-title" style={{ 
+                            fontSize: window.innerWidth <= 480 ? '1.4em' : 
+                                     window.innerWidth <= 768 ? '1.6em' : '2.5em', 
+                            color: '#FFD700', 
+                            marginBottom: window.innerWidth <= 480 ? '10px' : 
+                                         window.innerWidth <= 768 ? '12px' : '20px',
+                            lineHeight: '1.2'
+                        }}>
                             Jeu Terminé !
                         </h2>
-                        <p style={{ fontSize: '1.5em', marginBottom: '15px' }}>
+                        <p style={{ 
+                            fontSize: window.innerWidth <= 480 ? '1.1em' : 
+                                     window.innerWidth <= 768 ? '1.3em' : '1.5em', 
+                            marginBottom: '15px',
+                            lineHeight: '1.4'
+                        }}>
                             Vous avez deviné <span style={{color: '#A8D9A7', fontWeight: 'bold'}}>{guessedCountries.length}</span> {gameConfig.unitLabel} sur <span style={{color: '#FFF', fontWeight: 'bold'}}>{totalCountries}</span>.
                         </p>
-                        <p style={{ fontSize: '1.2em', marginBottom: '30px' }}>
+                        <p style={{ 
+                            fontSize: window.innerWidth <= 480 ? '1em' : 
+                                     window.innerWidth <= 768 ? '1.1em' : '1.2em', 
+                            marginBottom: window.innerWidth <= 480 ? '20px' : '30px' 
+                        }}>
                             Temps écoulé : <span style={{color: '#FF4D4D', fontWeight: 'bold'}}>{formatTime(gameTimeSeconds - timeLeft)}</span>
                         </p>
                         
                         {/* Statistiques détaillées */}
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            gap: '20px', 
-                            marginBottom: '30px',
-                            flexWrap: 'wrap'
+                        <div className="end-game-stats-grid" style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: window.innerWidth <= 480 ? 'repeat(2, 1fr)' : 
+                                               window.innerWidth <= 768 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                            gap: window.innerWidth <= 480 ? '6px' : window.innerWidth <= 768 ? '8px' : '15px', 
+                            marginBottom: window.innerWidth <= 480 ? '12px' : window.innerWidth <= 768 ? '15px' : '30px',
+                            maxWidth: '100%'
                         }}>
-                            <div style={{ 
+                            <div className="end-game-stat-item" style={{ 
                                 backgroundColor: 'rgba(255,255,255,0.1)', 
-                                padding: '10px 15px', 
+                                padding: window.innerWidth <= 480 ? '4px 6px' : window.innerWidth <= 768 ? '6px 8px' : '10px 15px', 
                                 borderRadius: '10px',
-                                textAlign: 'center',
-                                minWidth: '120px'
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#4CAF50' }}>{accuracy}%</div>
-                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Précision</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '1.1em' : window.innerWidth <= 768 ? '1.2em' : '1.5em', 
+                                    fontWeight: 'bold', 
+                                    color: '#4CAF50' 
+                                }}>{accuracy}%</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '0.7em' : window.innerWidth <= 768 ? '0.8em' : '0.9em', 
+                                    opacity: 0.8 
+                                }}>Précision</div>
                             </div>
-                            <div style={{ 
+                            <div className="end-game-stat-item" style={{ 
                                 backgroundColor: 'rgba(255,255,255,0.1)', 
-                                padding: '10px 15px', 
+                                padding: window.innerWidth <= 480 ? '4px 6px' : window.innerWidth <= 768 ? '6px 8px' : '10px 15px', 
                                 borderRadius: '10px',
-                                textAlign: 'center',
-                                minWidth: '120px'
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#FFC107' }}>{totalGuesses}</div>
-                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Tentatives</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '1.1em' : window.innerWidth <= 768 ? '1.2em' : '1.5em', 
+                                    fontWeight: 'bold', 
+                                    color: '#FFC107' 
+                                }}>{totalGuesses}</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '0.7em' : window.innerWidth <= 768 ? '0.8em' : '0.9em', 
+                                    opacity: 0.8 
+                                }}>Tentatives</div>
                             </div>
-                            <div style={{ 
+                            <div className="end-game-stat-item" style={{ 
                                 backgroundColor: 'rgba(255,255,255,0.1)', 
-                                padding: '10px 15px', 
+                                padding: window.innerWidth <= 480 ? '4px 6px' : window.innerWidth <= 768 ? '6px 8px' : '10px 15px', 
                                 borderRadius: '10px',
-                                textAlign: 'center',
-                                minWidth: '120px'
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#17A2B8' }}>{hintsUsed}</div>
-                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Indices</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '1.1em' : window.innerWidth <= 768 ? '1.2em' : '1.5em', 
+                                    fontWeight: 'bold', 
+                                    color: '#17A2B8' 
+                                }}>{hintsUsed}</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '0.7em' : window.innerWidth <= 768 ? '0.8em' : '0.9em', 
+                                    opacity: 0.8 
+                                }}>Indices</div>
                             </div>
-                            <div style={{ 
+                            <div className="end-game-stat-item" style={{ 
                                 backgroundColor: 'rgba(255,255,255,0.1)', 
-                                padding: '10px 15px', 
+                                padding: window.innerWidth <= 480 ? '4px 6px' : window.innerWidth <= 768 ? '6px 8px' : '10px 15px', 
                                 borderRadius: '10px',
-                                textAlign: 'center',
-                                minWidth: '120px'
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#FF6B6B' }}>{skipsUsed}</div>
-                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Passés</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '1.1em' : window.innerWidth <= 768 ? '1.2em' : '1.5em', 
+                                    fontWeight: 'bold', 
+                                    color: '#FF6B6B' 
+                                }}>{skipsUsed}</div>
+                                <div style={{ 
+                                    fontSize: window.innerWidth <= 480 ? '0.7em' : window.innerWidth <= 768 ? '0.8em' : '0.9em', 
+                                    opacity: 0.8 
+                                }}>Passés</div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px', marginTop: '20px' }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            gap: window.innerWidth <= 480 ? '12px' : '18px', 
+                            marginTop: '20px' 
+                        }}>
                             <button 
+                                className="end-game-button"
                                 onClick={resetGame} 
                                 style={{
                                     backgroundColor: '#007bff',
-                                    borderRadius: '30px', 
-                                    padding: '15px 40px', 
+                                    borderRadius: window.innerWidth <= 480 ? '20px' : '30px', 
+                                    padding: window.innerWidth <= 480 ? '8px 15px' : 
+                                            window.innerWidth <= 768 ? '10px 20px' : '15px 40px', 
                                     color: 'white',
                                     fontWeight: 'bold',
-                                    fontSize: '1.3em',
+                                    fontSize: window.innerWidth <= 480 ? '0.9em' : 
+                                             window.innerWidth <= 768 ? '1em' : '1.3em',
                                     border: 'none',
                                     cursor: 'pointer',
                                     transition: 'background-color 0.3s ease, transform 0.1s ease',
                                     boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                                    minWidth: '200px',
+                                    width: window.innerWidth <= 480 ? 'calc(100% - 10px)' : 
+                                           window.innerWidth <= 768 ? 'calc(100% - 20px)' : 'auto',
+                                    maxWidth: window.innerWidth <= 480 ? 'calc(100% - 10px)' : 
+                                             window.innerWidth <= 768 ? 'calc(100% - 20px)' : 'none',
+                                    minWidth: window.innerWidth <= 480 ? 'auto' : '200px',
+                                    margin: window.innerWidth <= 480 ? '0 5px' : 
+                                           window.innerWidth <= 768 ? '0 10px' : '0',
+                                    boxSizing: 'border-box'
                                 }}
                             >
                                 Rejouer
                             </button>
                             <button
+                                className="end-game-button"
                                 onClick={goToHome}
                                 style={{
                                     backgroundColor: '#17A2B8',
-                                    borderRadius: '30px',
-                                    padding: '15px 40px',
+                                    borderRadius: window.innerWidth <= 480 ? '20px' : '30px',
+                                    padding: window.innerWidth <= 480 ? '8px 15px' : 
+                                            window.innerWidth <= 768 ? '10px 20px' : '15px 40px',
                                     color: 'white',
                                     fontWeight: 'bold',
-                                    fontSize: '1.3em',
+                                    fontSize: window.innerWidth <= 480 ? '0.9em' : 
+                                             window.innerWidth <= 768 ? '1em' : '1.3em',
                                     border: 'none',
                                     cursor: 'pointer',
-                                    minWidth: '200px',
+                                    width: window.innerWidth <= 480 ? 'calc(100% - 10px)' : 
+                                           window.innerWidth <= 768 ? 'calc(100% - 20px)' : 'auto',
+                                    maxWidth: window.innerWidth <= 480 ? 'calc(100% - 10px)' : 
+                                             window.innerWidth <= 768 ? 'calc(100% - 20px)' : 'none',
+                                    minWidth: window.innerWidth <= 480 ? 'auto' : '200px',
+                                    margin: window.innerWidth <= 480 ? '0 5px' : 
+                                           window.innerWidth <= 768 ? '0 10px' : '0',
                                     transition: 'background-color 0.3s ease, transform 0.1s ease',
                                     boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                    boxSizing: 'border-box'
                                 }}
                             >
                                 Choisir un autre mode
