@@ -1,9 +1,12 @@
 // src/components/game/MapChart/MapChart.jsx
-import React, { useState, useEffect } from "react";
+// Interactive map component using react-simple-maps for geography visualization
+// Handles country/region highlighting, micro-states markers, and responsive design
+import React, { useState, useEffect, useMemo } from "react";
 // Importez uniquement ComposableMap, Geographies, Geography, Marker
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"; 
 import { EUROPEAN_COUNTRIES } from '../../../data/countries';
 
+// European subregions for potential future filtering
 const EUROPEAN_SUBREGIONS = [
     "Western Europe",
     "Eastern Europe",
@@ -12,88 +15,99 @@ const EUROPEAN_SUBREGIONS = [
     "Central Europe" 
 ];
 
-// Couleurs utilisées précédemment
-const NON_EUROPEAN_COUNTRY_FILL = "#232323"; // Gris très sombre, proche du screenshot
-const EUROPEAN_DEFAULT_FILL = "#505050"; 
+// Color scheme for map visualization
+const NON_EUROPEAN_COUNTRY_FILL = "#232323"; // Very dark gray for non-European countries
+const EUROPEAN_DEFAULT_FILL = "#505050"; // Medium gray for European countries
 
-// Coordonnées standards des micro-états (longitude, latitude)
+// Coordinate definitions for micro-states that are too small to see on the map
+// These coordinates are in [longitude, latitude] format for precise positioning
 const MARKER_COORDINATES = {
-    "AND": [1.5218, 42.5063], // Andorre
-    "MCO": [7.4167, 43.7333], // Monaco  
-    "MLT": [14.5146, 35.8989], // Malte
-    "SMR": [12.4578, 43.9424], // Saint-Marin
-    "LIE": [9.5215, 47.1410], // Liechtenstein
-    "VAT": [12.4534, 41.9033], // Vatican
+    "AND": [1.5218, 42.5063],   // Andorra
+    "MCO": [7.4167, 43.7333],   // Monaco  
+    "MLT": [14.5146, 35.8989],  // Malta
+    "SMR": [12.4578, 43.9424],  // San Marino
+    "LIE": [9.5215, 47.1410],   // Liechtenstein
+    "VAT": [12.4534, 41.9033],  // Vatican City
 };
 
-// Configurations de projection par défaut
+// Map projection configurations for different screen sizes
+// These control zoom level, rotation, and centering of the map
 const DEFAULT_PROJECTION = { rotate: [-5.0, -35.0, 0], scale: 350 };
 const TABLET_PROJECTION = { 
     rotate: [-8.0, -50.0, 0],
-    scale: 650, // Dézoom un peu par rapport à 800
+    scale: 650, // Slightly zoomed out compared to mobile
     center: [0, 0]
 };
 const MOBILE_PROJECTION = { 
-    rotate: [-8.0, -50.0, 0], // Même rotation que tablette pour centrer l'Europe
-    scale: 1000,
-    center: [0, 0] // Centré au lieu de décalé vers la droite
+    rotate: [-8.0, -50.0, 0], // Same rotation as tablet to center Europe
+    scale: 1000,              // More zoomed in for mobile screens
+    center: [0, 0]            // Centered instead of offset
 };
 
-// Le composant MapChart reçoit uniquement currentCountry et guessedCountries
-const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty = 'ISO_A3', projectionConfig }) => { 
-    const [currentProjection, setCurrentProjection] = useState(DEFAULT_PROJECTION);
+// Main MapChart component - receives game state and configuration as props
+const MapChart = ({ 
+    currentCountry,      // Entity currently being guessed (highlighted in red)
+    guessedCountries,    // Array of successfully guessed entities (shown in green)
+    geoJsonPath,         // Path to GeoJSON data file
+    geoIdProperty = 'ISO_A3',  // Property name for matching entities (ISO_A3 for countries, code for regions)
+    projectionConfig     // Map projection settings from game configuration
+}) => { 
+    // State for managing responsive map projection
+    const [currentProjection, setCurrentProjection] = useState(projectionConfig || DEFAULT_PROJECTION);
 
-    // Gestion du responsive
+    // Responsive design handler - only update when projectionConfig actually changes
     useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth <= 480) { // Mobile phones
-                setCurrentProjection(MOBILE_PROJECTION);
-            } else if (window.innerWidth <= 768) { // Tablets
-                setCurrentProjection(TABLET_PROJECTION);
-            } else {
-                setCurrentProjection(projectionConfig || DEFAULT_PROJECTION);
-            }
-        };
-
-        // Initial check
-        handleResize();
-
-        // Add event listener
-        window.addEventListener('resize', handleResize);
-
-        // Cleanup
-        return () => window.removeEventListener('resize', handleResize);
+        if (projectionConfig) {
+            setCurrentProjection(projectionConfig);
+        }
     }, [projectionConfig]);
 
-    // Liste des codes des pays d'Europe (pour le mode Europe)
-    const europeanCountryCodes = EUROPEAN_COUNTRIES.map(c => String(c.isoCode));
+    // Memoize European country codes to prevent recalculation
+    const europeanCountryCodes = useMemo(() => 
+        EUROPEAN_COUNTRIES.map(c => String(c.isoCode)), 
+        []
+    );
     
-    // Déterminer si on est en mode Europe (pour afficher les marqueurs)
+    // Determine if we're in Europe mode (for micro-states markers display)
     const isEuropeMode = geoIdProperty === 'ISO_A3';
 
-    // Fonction qui détermine le style (couleur, bordure) de chaque entité géographique.
-    // La logique des micro-états n'est plus présente ici.
-    const getCountryStyle = (geo) => {
+    // Memoize style function to prevent recreation on every render
+    const getCountryStyle = useMemo(() => (geo) => {
         const geoId = String(geo.properties[geoIdProperty]);
-        const isGuessed = guessedCountries.some(c => String(c.code) === geoId || String(c.isoCode) === geoId);
-        const isCurrent = currentCountry && (String(currentCountry.code) === geoId || String(currentCountry.isoCode) === geoId);
+        
+        // Check if this entity has been successfully guessed
+        const isGuessed = guessedCountries.some(c => 
+            String(c.code) === geoId || String(c.isoCode) === geoId
+        );
+        
+        // Check if this is the current entity to guess
+        const isCurrent = currentCountry && (
+            String(currentCountry.code) === geoId || String(currentCountry.isoCode) === geoId
+        );
 
+        // Current entity styling - bright red with no border for maximum visibility
         if (isCurrent) {
             const style = { 
-                fill: "#FF4D4D",
-                stroke: "transparent",
+                fill: "#FF4D4D",           // Bright red
+                stroke: "transparent",      // No border
                 strokeWidth: 0,
                 outline: "none",
                 strokeOpacity: 0
             };
             return {
                 default: style,
-                hover: style,
-                pressed: style
+                hover: style,    // Same style on hover
+                pressed: style   // Same style when clicked
             };
         } 
+        // Successfully guessed entities - green with white border
         else if (isGuessed) {
-            const style = { fill: "#A8D9A7", stroke: "#FFFFFF", strokeWidth: 0.5, outline: "none" };
+            const style = { 
+                fill: "#A8D9A7",      // Light green
+                stroke: "#FFFFFF",     // White border
+                strokeWidth: 0.5, 
+                outline: "none" 
+            };
             return {
                 default: style,
                 hover: style,
@@ -101,11 +115,13 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
             };
         }
 
-        // --- LOGIQUE SPÉCIFIQUE AU MODE EUROPE ---
-        // Si le geoId est dans la liste des pays d'Europe, couleur Europe, sinon couleur hors Europe
+        // --- EUROPE MODE SPECIFIC LOGIC ---
+        // Different colors for European vs non-European countries
         if (geoIdProperty === 'ISO_A3') {
             const isEuropean = europeanCountryCodes.includes(geoId);
+            
             if (isEuropean) {
+                // European countries - medium gray with white border
                 const style = {
                     fill: EUROPEAN_DEFAULT_FILL,
                     stroke: "#FFFFFF",
@@ -118,6 +134,7 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
                     pressed: style
                 };
             } else {
+                // Non-European countries - very dark gray, no border
                 const style = {
                     fill: NON_EUROPEAN_COUNTRY_FILL,
                     stroke: "none",
@@ -132,57 +149,61 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
             }
         }
 
-        // --- LOGIQUE PAR DÉFAUT (régions, etc.) ---
-        const style = { fill: '#505050', stroke: '#FFFFFF', strokeWidth: 0.5, outline: 'none' };
+        // --- DEFAULT STYLING (for regions mode, etc.) ---
+        const style = { 
+            fill: '#505050',      // Medium gray
+            stroke: '#FFFFFF',    // White borders
+            strokeWidth: 0.5, 
+            outline: 'none' 
+        };
         return {
             default: style,
             hover: style,
             pressed: style
         };
-    };
+    }, [currentCountry, guessedCountries, geoIdProperty, europeanCountryCodes]);
 
-    // --- GESTION DE L'ÉTAT DE CHARGEMENT ---
-    // Les logs de débogage et la logique de chargement ont été retirés,
-    // car useGeographies et projection ne sont plus utilisés directement ici.
-    // Geographies gère son propre état de chargement.
-
-    // Fonction pour obtenir le style des marqueurs
-    const getMarkerStyle = (entityId) => {
-        const isGuessed = guessedCountries.some(c => String(c.code || c.isoCode) === entityId);
-        const isCurrent = currentCountry && String(currentCountry.code || currentCountry.isoCode) === entityId;
+    // Memoize marker style function
+    const getMarkerStyle = useMemo(() => (entityId) => {
+        // Check game state for this specific entity
+        const isGuessed = guessedCountries.some(c => 
+            String(c.code || c.isoCode) === entityId
+        );
+        const isCurrent = currentCountry && 
+            String(currentCountry.code || currentCountry.isoCode) === entityId;
 
         if (isCurrent) {
             return {
-                fill: "#FF4D4D", // Rouge pour le pays actuel
+                fill: "#FF4D4D",    // Red for current entity
                 stroke: "none",
                 strokeWidth: 0,
-                radius: 5
+                radius: 5           // Larger size for current
             };
         } else if (isGuessed) {
             return {
-                fill: "#A8D9A7", // Vert pour les pays devinés
+                fill: "#A8D9A7",    // Green for guessed entities
                 stroke: "none", 
                 strokeWidth: 0,
-                radius: 4
+                radius: 4           // Medium size for guessed
             };
         } else {
             return {
-                fill: "#FFFFFF", // Blanc comme les frontières
+                fill: "#FFFFFF",    // White for unguessed (matches borders)
                 stroke: "none",
                 strokeWidth: 0,
-                radius: 3
+                radius: 3           // Smallest size for unguessed
             };
         }
-    };
+    }, [currentCountry, guessedCountries]);
 
     return (
         <div className="map-container" style={{ width: "100%", height: "100%" }}>
-            <ComposableMap projection="geoAzimuthalEqualArea" projectionConfig={currentProjection}>
-                <defs>
-                    {/* Suppression du filtre redBorderGlow car il n'est plus utilisé */}
-                </defs>
-
-                {/* Retour à une seule instance de Geographies, sans logique de Circle */}
+            {/* Main map component with azimuthal equal-area projection */}
+            <ComposableMap 
+                projection="geoAzimuthalEqualArea" 
+                projectionConfig={currentProjection}
+            >
+                {/* Geographic regions rendering */}
                 <Geographies geography={geoJsonPath}>
                     {({ geographies }) =>
                         geographies.map(geo => (
@@ -195,13 +216,17 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
                     }
                 </Geographies>
 
-                {/* Sphères pour les micro-états et petits pays */}
+                {/* Markers for micro-states - only shown in Europe mode */}
                 {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
-                    // N'afficher la sphère que si c'est le pays courant
-                    const isCurrent = currentCountry && String(currentCountry.code || currentCountry.isoCode) === entityId;
-                    const isGuessed = guessedCountries.some(c => String(c.code || c.isoCode) === entityId);
+                    // Check game state for this micro-state
+                    const isCurrent = currentCountry && 
+                        String(currentCountry.code || currentCountry.isoCode) === entityId;
+                    const isGuessed = guessedCountries.some(c => 
+                        String(c.code || c.isoCode) === entityId
+                    );
                     
-                    // Afficher seulement si c'est le pays courant ou s'il a déjà été deviné
+                    // Only show marker if it's the current entity or has been guessed
+                    // This prevents showing all micro-states at once (would be confusing)
                     if (!isCurrent && !isGuessed) {
                         return null;
                     }
@@ -209,7 +234,7 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
                     const markerStyle = getMarkerStyle(entityId);
                     return (
                         <Marker key={entityId} coordinates={coordinates}>
-                            {/* Sphère simple */}
+                            {/* Simple circle marker with drop shadow for visibility */}
                             <circle 
                                 cx="0"
                                 cy="0"
@@ -218,7 +243,7 @@ const MapChart = ({ currentCountry, guessedCountries, geoJsonPath, geoIdProperty
                                 stroke={markerStyle.stroke}
                                 strokeWidth={markerStyle.strokeWidth}
                                 style={{
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' // Shadow for better visibility
                                 }}
                             />
                         </Marker>

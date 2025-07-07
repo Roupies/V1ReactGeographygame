@@ -1,169 +1,78 @@
-// src/hooks/useGameLogic.js
-import { useState, useEffect } from 'react';
-import { EUROPEAN_COUNTRIES, normalizeString } from '../data/countries';
+// Modular game logic hook that composes specialized hooks
+// Follows Interface Segregation Principle by using focused hooks
+// Follows Single Responsibility Principle by delegating to specialized hooks
+// Follows Dependency Inversion Principle by accepting abstractions
+
+import { useEffect, useCallback } from 'react';
+import { useGameState } from './useGameState';
+import { useGameStatistics } from './useGameStatistics';
+import { useGameActions } from './useGameActions';
 import { useTimer } from './useTimer';
 
-const GAME_TIME_SECONDS = 180; // Durée totale du jeu en secondes (3 minutes)
-const HINT_PENALTY_SECONDS = 5; // Pénalité pour l'utilisation d'un indice
+const GAME_TIME_SECONDS = 180;
 
-// Algorithme de Fisher-Yates pour mélanger un tableau
-function shuffleArray(array) {
-    const arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-// Le hook accepte maintenant des paramètres pour la liste d'entités et les fonctions de validation
 export const useGameLogic = (
-    entities = EUROPEAN_COUNTRIES,
+    entities = [],
     getName = entity => entity.name,
     getAltNames = entity => entity.altNames || []
 ) => {
-    const [countriesToGuess, setCountriesToGuess] = useState([]); // pile ordonnée
-    const [guessedCountries, setGuessedCountries] = useState([]); 
-    const [feedbackMessage, setFeedbackMessage] = useState(''); 
-    const [guessInput, setGuessInput] = useState(''); 
-    const [gameEnded, setGameEnded] = useState(false); 
-    const [hint, setHint] = useState(''); 
-    
-    // Nouvelles statistiques
-    const [totalGuesses, setTotalGuesses] = useState(0);
-    const [hintsUsed, setHintsUsed] = useState(0);
-    const [skipsUsed, setSkipsUsed] = useState(0);
+    // Compose specialized hooks - each with a single responsibility
+    const gameState = useGameState(entities);
+    const statistics = useGameStatistics();
+    const timer = useTimer(GAME_TIME_SECONDS, gameState.gameEnded);
+    const actions = useGameActions(gameState, statistics, timer, getName, getAltNames);
 
-    const totalCountries = entities.length;
-    const { timeLeft, setTimeLeft, formatTime } = useTimer(GAME_TIME_SECONDS, gameEnded);
-
-    // Initialisation ou reset du jeu
-    const resetGame = () => {
-        const shuffled = shuffleArray(entities);
-        setCountriesToGuess(shuffled);
-        setGuessedCountries([]);
-        setTimeLeft(GAME_TIME_SECONDS);
-        setGuessInput('');
-        setFeedbackMessage(''); 
-        setHint(''); 
-        setGameEnded(false);
-        // Reset des statistiques
-        setTotalGuesses(0);
-        setHintsUsed(0);
-        setSkipsUsed(0);
-    };
-
-    // Gestion de la fin du temps
+    // Handle timer expiration - single responsibility
     useEffect(() => {
-        if (timeLeft === 0 && !gameEnded) { 
-            setGameEnded(true);
-            setFeedbackMessage(`Temps écoulé ! Vous avez deviné ${guessedCountries.length} entités sur ${totalCountries}.`);
+        if (timer.timeLeft === 0 && !gameState.gameEnded) {
+            gameState.setGameEnded(true);
         }
-    }, [timeLeft, gameEnded, guessedCountries.length, totalCountries]); 
+    }, [timer.timeLeft, gameState.gameEnded]);
 
-    // Gestion de la fin de la pile
-    useEffect(() => {
-        if (countriesToGuess.length === 0 && !gameEnded) {
-            setGameEnded(true);
-            setFeedbackMessage(`Félicitations ! Vous avez deviné toutes les ${totalCountries} entités !`);
-        }
-    }, [countriesToGuess, gameEnded, totalCountries]);
+    // Stable reset functions - simplified to avoid dependency issues
+    const resetGame = useCallback(() => {
+        gameState.initializeGame();
+        statistics.resetStatistics();
+        actions.resetInputState();
+        timer.setTimeLeft(GAME_TIME_SECONDS);
+    }, []); // Empty dependencies to avoid loops
 
-    // L'entité courante est toujours la première de la pile
-    const currentCountry = countriesToGuess[0] || null;
+    const resetForNewMode = useCallback(() => {
+        resetGame();
+    }, [resetGame]);
 
-    const handleGuess = () => {
-        if (gameEnded) {
-            setFeedbackMessage("Le jeu est terminé.");
-            return;
-        }
-        if (!guessInput.trim()) {
-            setFeedbackMessage("Veuillez entrer une réponse.");
-            return;
-        }
-
-        setTotalGuesses(prev => prev + 1);
-
-        const normalizedGuess = normalizeString(guessInput);
-        const acceptedNames = [
-            normalizeString(getName(currentCountry)),
-            ...getAltNames(currentCountry).map(name => normalizeString(name))
-        ];
-
-        if (acceptedNames.includes(normalizedGuess)) {
-            setFeedbackMessage(`Bonne réponse ! C'était ${getName(currentCountry)}.`);
-            setGuessedCountries([...guessedCountries, currentCountry]); 
-            setGuessInput(''); 
-            setHint(''); 
-            // Retirer l'entité courante de la pile
-            setCountriesToGuess(prev => prev.slice(1));
-        } else {
-            setFeedbackMessage(`Faux. Ce n'est pas ${guessInput.trim()}.`);
-        }
-    };
-
-    const handleSkip = () => {
-        if (gameEnded || !currentCountry) {
-            setFeedbackMessage("Le jeu est terminé ou il n'y a pas d'entité à passer.");
-            return;
-        }
-        setSkipsUsed(prev => prev + 1);
-        setFeedbackMessage("");
-        setGuessInput(''); 
-        setHint(''); 
-        // Déplacer l'entité courante à la fin de la pile
-        setCountriesToGuess(prev => {
-            if (prev.length <= 1) return prev; // rien à faire si une seule entité
-            const [first, ...rest] = prev;
-            return [...rest, first];
-        });
-    };
-
-    const handleHint = () => {
-        if (gameEnded || !currentCountry) {
-            setFeedbackMessage("Le jeu est terminé ou il n'y a pas d'entité pour un indice.");
-            return;
-        }
-
-        if (hint) {
-            // Ne rien faire si un indice a déjà été donné
-            return;
-        }
-
-        setHintsUsed(prev => prev + 1);
-        setTimeLeft(prevTime => Math.max(0, prevTime - HINT_PENALTY_SECONDS));
-        const firstLetter = getName(currentCountry).charAt(0).toUpperCase();
-        setHint(`Indice : La première lettre est "${firstLetter}"`);
-        setFeedbackMessage(''); 
-    };
-
-    const handleKeyPress = (event) => {
-        if (event.key === 'Enter') {
-            handleGuess();
-        }
-    };
-
+    // Return object without useMemo to avoid dependency issues
     return {
-        currentCountry,
-        guessedCountries,
-        guessInput,
-        setGuessInput,
-        feedbackMessage,
-        handleGuess,
-        handleKeyPress,
-        handleSkip, 
-        handleHint, 
-        hint, 
-        timeLeft,
-        formatTime,
-        gameEnded,
-        resetGame,
-        totalCountries,
+        // Game state (from useGameState)
+        currentCountry: gameState.currentCountry,
+        guessedCountries: gameState.guessedCountries,
+        gameEnded: gameState.gameEnded,
+        totalCountries: gameState.totalCountries,
+
+        // Timer (from useTimer)
+        timeLeft: timer.timeLeft,
+        formatTime: timer.formatTime,
         gameTimeSeconds: GAME_TIME_SECONDS,
-        // Nouvelles statistiques
-        totalGuesses,
-        hintsUsed,
-        skipsUsed,
-        accuracy: totalGuesses > 0 ? ((guessedCountries.length / totalGuesses) * 100).toFixed(1) : 0
+
+        // Actions and input (from useGameActions)
+        guessInput: actions.guessInput,
+        setGuessInput: actions.setGuessInput,
+        feedbackMessage: actions.feedbackMessage,
+        hint: actions.hint,
+        handleGuess: actions.handleGuess,
+        handleSkip: actions.handleSkip,
+        handleHint: actions.handleHint,
+        handleKeyPress: actions.handleKeyPress,
+
+        // Statistics (from useGameStatistics)
+        totalGuesses: statistics.totalGuesses,
+        hintsUsed: statistics.hintsUsed,
+        skipsUsed: statistics.skipsUsed,
+        accuracy: statistics.getAccuracy(gameState.guessedCountries.length),
+
+        // Game management
+        initializeGame: gameState.initializeGame,
+        resetGame,
+        resetForNewMode
     };
-};
+}; 

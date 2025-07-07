@@ -1,32 +1,68 @@
 // src/hooks/useTimer.js
-import { useState, useEffect } from 'react';
+// Custom React hook for managing countdown timer functionality
+// Provides time tracking, automatic stopping, and time formatting utilities
+import { useState, useEffect, useCallback, useRef } from 'react';
 
+// Timer hook - manages countdown from initial time to zero
+// Parameters:
+// - initialTime: starting time in seconds
+// - gameEnded: external flag to stop the timer
 export const useTimer = (initialTime, gameEnded) => {
     const [timeLeft, setTimeLeft] = useState(initialTime);
+    const intervalRef = useRef(null);
 
-    // Effet pour gérer le minuteur
+    // Simple timer effect - no dependency loops
     useEffect(() => {
-        // Arrête le minuteur si le jeu est terminé (état global 'gameEnded') ou si le temps est écoulé
-        if (gameEnded || timeLeft === 0) {
-            return; 
+        // Clear any existing timer
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
         }
 
-        const timer = setInterval(() => {
-            setTimeLeft(prevTime => prevTime - 1);
+        // Don't start timer if game ended
+        if (gameEnded) {
+            return;
+        }
+
+        // Start new timer
+        intervalRef.current = setInterval(() => {
+            setTimeLeft(prev => {
+                const newTime = prev - 1;
+                if (newTime <= 0) {
+                    return 0;
+                }
+                return newTime;
+            });
         }, 1000);
 
-        // Fonction de nettoyage pour arrêter le minuteur quand le composant est démonté ou l'effet est relancé
-        return () => clearInterval(timer); 
-    }, [timeLeft, gameEnded]); // Le minuteur se relance ou s'arrête si le temps ou l'état du jeu change
+        // Cleanup
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
+    }, [gameEnded]); // Only depend on gameEnded
 
-    // Fonction pour formater le temps en MM:SS
-    const formatTime = (seconds) => {
+    // Stop timer when time reaches 0
+    useEffect(() => {
+        if (timeLeft <= 0 && intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, [timeLeft]);
+
+    // Format time function
+    const formatTime = useCallback((seconds) => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
-        const formattedMinutes = String(minutes).padStart(2, '0');
-        const formattedSeconds = String(remainingSeconds).padStart(2, '0');
-        return `${formattedMinutes}:${formattedSeconds}`;
-    };
+        return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    }, []);
 
-    return { timeLeft, setTimeLeft, formatTime };
+    // Set time function
+    const setTimeLeftStable = useCallback((value) => {
+        setTimeLeft(value);
+    }, []);
+
+    return { timeLeft, setTimeLeft: setTimeLeftStable, formatTime };
 };
