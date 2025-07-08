@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import MapChart from './components/game/MapChart/MapChart';
+import DualMapChart from './components/game/MapChart/DualMapChart';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useFocusManagement } from './hooks/useFocusManagement';
 import { useResponsiveProjection } from './hooks/useResponsiveProjection';
@@ -73,6 +74,32 @@ function App() {
         handleKeyPress: gameLogic.handleKeyPress
     }), [gameLogic.handleGuess, gameLogic.handleSkip, gameLogic.handleHint, gameLogic.handleKeyPress, focusManagement.restoreFocus]);
 
+    // Determine which map component to use based on game configuration
+    const renderMapComponent = () => {
+        // Use DualMapChart for modes with multiple zones
+        if (gameConfig?.zones && Array.isArray(gameConfig.zones)) {
+            return (
+                <DualMapChart 
+                    gameConfig={gameConfig}
+                    currentCountry={gameLogic.currentCountry}
+                    guessedCountries={gameLogic.guessedCountries}
+                    projectionConfig={projectionConfig}
+                />
+            );
+        }
+        
+        // Use standard MapChart for single-zone modes
+        return (
+            <MapChart 
+                currentCountry={gameLogic.currentCountry}
+                guessedCountries={gameLogic.guessedCountries}
+                geoJsonPath={gameConfig.geoJson}
+                geoIdProperty={gameConfig.geoIdProperty}
+                projectionConfig={projectionConfig}
+            />
+        );
+    };
+
     // Show home screen if no mode selected
     if (!selectedMode) {
         return <HomeScreen onSelectMode={setSelectedMode} />;
@@ -89,13 +116,7 @@ function App() {
             />
 
             <div className="map-container">
-                <MapChart 
-                    currentCountry={gameLogic.currentCountry}
-                    guessedCountries={gameLogic.guessedCountries}
-                    geoJsonPath={gameConfig.geoJson}
-                    geoIdProperty={gameConfig.geoIdProperty}
-                    projectionConfig={projectionConfig}
-                />
+                {renderMapComponent()}
             </div>
 
             <GameControls

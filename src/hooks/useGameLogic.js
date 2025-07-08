@@ -29,13 +29,28 @@ export const useGameLogic = (
         }
     }, [timer.timeLeft, gameState.gameEnded]);
 
-    // Stable reset functions - simplified to avoid dependency issues
+    // Fixed reset function with proper dependencies
     const resetGame = useCallback(() => {
-        gameState.initializeGame();
+        console.log('🔄 Resetting game...');
+
+        // Reset in proper order: end game first, then reset everything
+        gameState.setGameEnded(false);
         statistics.resetStatistics();
         actions.resetInputState();
         timer.setTimeLeft(GAME_TIME_SECONDS);
-    }, []); // Empty dependencies to avoid loops
+        
+        // Initialize game after all resets
+        setTimeout(() => {
+            gameState.initializeGame();
+            console.log('✅ Game reset complete!');
+        }, 0);
+    }, [
+        gameState.setGameEnded,
+        gameState.initializeGame,
+        statistics.resetStatistics,
+        actions.resetInputState,
+        timer.setTimeLeft
+    ]);
 
     const resetForNewMode = useCallback(() => {
         resetGame();

@@ -59,7 +59,7 @@ const MapChart = ({
     useEffect(() => {
         if (projectionConfig) {
             setCurrentProjection(projectionConfig);
-        }
+            }
     }, [projectionConfig]);
 
     // Memoize European country codes to prevent recalculation

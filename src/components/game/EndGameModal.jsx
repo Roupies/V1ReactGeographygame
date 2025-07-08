@@ -1,16 +1,87 @@
-// Specialized component for end game modal
+// Specialized component for end game modal with detailed statistics
 // Follows Single Responsibility Principle - only handles end game UI
 import React from 'react';
 
-const EndGameModal = ({ gameEnded, resetGame, goToHome }) => {
+const EndGameModal = ({ 
+    // Game state
+    gameEnded,
+    guessedCountries,
+    totalCountries,
+    gameTimeSeconds,
+    timeLeft,
+    
+    // Statistics  
+    totalGuesses,
+    hintsUsed,
+    skipsUsed,
+    accuracy,
+    
+    // Configuration
+    gameConfig,
+    
+    // Actions
+    resetGame,
+    goToHome,
+    
+    // Utilities
+    formatTime
+}) => {
     if (!gameEnded) return null;
+
+    // Calculate game duration
+    const gameDuration = gameTimeSeconds || (180 - timeLeft);
+    const finalTime = formatTime ? formatTime(gameDuration) : `${Math.floor(gameDuration / 60)}:${(gameDuration % 60).toString().padStart(2, '0')}`;
+    
+    // Calculate percentage
+    const percentage = totalCountries > 0 ? Math.round((guessedCountries.length / totalCountries) * 100) : 0;
     
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px', borderRadius: '10px' }}>
-                <h2>Game Over!</h2>
-                <button onClick={resetGame}>Play Again</button>
-                <button onClick={goToHome}>Home</button>
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>🎉 Partie terminée !</h2>
+                
+                <div className="stats-section">
+                    <h3>📊 Résultats</h3>
+                    <div className="stat-item">
+                        <span className="stat-label">Score :</span>
+                        <span className="stat-value">{guessedCountries.length}/{totalCountries} ({percentage}%)</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-label">Temps :</span>
+                        <span className="stat-value">{finalTime}</span>
+                    </div>
+                    {accuracy !== undefined && (
+                        <div className="stat-item">
+                            <span className="stat-label">Précision :</span>
+                            <span className="stat-value">{accuracy}%</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="stats-section">
+                    <h3>🎯 Statistiques</h3>
+                    <div className="stat-item">
+                        <span className="stat-label">Tentatives totales :</span>
+                        <span className="stat-value">{totalGuesses || 0}</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-label">Indices utilisés :</span>
+                        <span className="stat-value">{hintsUsed || 0}</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-label">Entités passées :</span>
+                        <span className="stat-value">{skipsUsed || 0}</span>
+                    </div>
+                </div>
+
+                <div className="modal-actions">
+                    <button className="btn-primary" onClick={resetGame}>
+                        🔄 Rejouer
+                    </button>
+                    <button className="btn-secondary" onClick={goToHome}>
+                        🏠 Accueil
+                    </button>
+                </div>
             </div>
         </div>
     );
