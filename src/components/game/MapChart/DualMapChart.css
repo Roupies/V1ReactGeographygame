@@ -30,16 +30,24 @@
 
 /* DOM-TOM zone (smaller, left side) */
 .map-zone.dom-tom {
-  flex: 1; /* Proportion équivalente pour plus d'espace */
-  max-width: 48%; /* Plus d'espace pour les DOM-TOM */
-  order: 1; /* Force l'ordre à gauche */
+  position: absolute; /* Position absolue pour contrôle total */
+  width: 50%; /* Taille fixe pour les DOM-TOM */
+  height: 100%; /* Prend toute la hauteur */
+  right: 49%; /* Déplacé plus à gauche de la France */
+  top: 0;
+  z-index: 10; /* S'assure qu'ils restent visibles */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Métropole zone (larger, right side) */
 .map-zone.métropole {
-  flex: 1; /* Proportion équivalente */
-  max-width: 52%; /* Légèrement plus d'espace */
-  order: 2; /* Force l'ordre à droite */
+  margin-left: auto; /* Pousse vers la droite */
+  width: 75%; /* Prend la majorité de l'espace */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Zone labels */

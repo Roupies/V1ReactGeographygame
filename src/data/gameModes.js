@@ -52,7 +52,7 @@ export const GAME_MODES = {
         geoJson: '/geojson/domtom.geojson',
         projectionConfig: { 
           rotate: [61, 5, 0],                 // Modifié: latitude positive pour remonter
-          scale: 600                          // Dézoomé pour voir tous les DOM-TOM
+          scale: 850                          // Dézoomé pour voir tous les DOM-TOM
         },
         // Codes des DOM-TOM
         regionCodes: ['01', '02', '03', '04', '06']
@@ -61,8 +61,8 @@ export const GAME_MODES = {
         name: "Métropole",
         geoJson: '/geojson/france-metropole.geojson',
         projectionConfig: { 
-          rotate: [-2, -43, 0],
-          scale: 1400                         // Slightly smaller for dual display
+          rotate: [-2, -46.5, 0],               // Ajusté pour mieux centrer la France
+          scale: 1800                           // Corrigé et augmenté pour un meilleur zoom
         },
         // Codes des régions métropolitaines (pour filtrer l'affichage)
         regionCodes: ['11', '24', '27', '28', '32', '44', '52', '53', '75', '76', '84', '93', '94']
