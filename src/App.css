@@ -656,3 +656,46 @@ html, body, #root {
     font-size: 0.85em;
   }
 }
+
+/* === ANIMATIONS POUR LE HINT POPUP === */
+
+/* Animation d'entrée depuis la gauche */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%) translateY(-50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(-50%);
+    opacity: 1;
+  }
+}
+
+/* Animation de secousse pour les mauvaises réponses */
+@keyframes shake {
+  0%, 100% { transform: translateX(-50%); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-50%) translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translateX(-50%) translateX(10px); }
+}
+
+/* Style pour le hint popup */
+.hint-popup {
+  animation: slideInLeft 0.3s ease;
+}
+
+/* Style pour la barre d'input avec effet de secousse */
+.input-bar.shake {
+  animation: shake 0.5s ease-in-out;
+  border-color: #ff4444 !important;
+  box-shadow: 0 4px 20px rgba(255, 68, 68, 0.3) !important;
+}
+
+/* Animation de survol pour les boutons des contrôles modernes */
+.modern-game-controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.modern-game-controls button:active {
+  transform: translateY(0);
+}

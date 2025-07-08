@@ -74,6 +74,7 @@ export const useGameLogic = (
         setGuessInput: actions.setGuessInput,
         feedbackMessage: actions.feedbackMessage,
         hint: actions.hint,
+        isShaking: actions.isShaking,
         handleGuess: actions.handleGuess,
         handleSkip: actions.handleSkip,
         handleHint: actions.handleHint,

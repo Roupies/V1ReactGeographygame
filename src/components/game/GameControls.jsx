@@ -1,5 +1,4 @@
-// Specialized component for game controls (input, buttons, feedback)
-// Follows Single Responsibility Principle - only handles control UI
+// Modern game controls component inspired by the screenshot design
 import React from 'react';
 
 const GameControls = ({
@@ -12,6 +11,7 @@ const GameControls = ({
     setGuessInput,
     feedbackMessage,
     hint,
+    isShaking,
     
     // Actions (with focus management already applied)
     handleGuess,
@@ -32,123 +32,143 @@ const GameControls = ({
         return null;
     }
 
-    return (
-        <div className="game-controls">
-            {/* Feedback messages (correct/incorrect answers, hints) */}
-            {feedbackMessage && <p>{feedbackMessage}</p>}
-            
-            {/* Hint display - shown when user requests a hint */}
-            {hint && (
-                <p style={{
-                    marginTop: '10px', 
-                    color: '#4CAF50',   // Green color for hints
-                    fontStyle: 'italic',
-                    fontSize: '1.1em'
-                }}>{hint}</p>
-            )}
+    const getPlaceholder = () => {
+        switch(gameConfig?.label) {
+            case "Pays d'Europe":
+                return "Entrez le nom du pays en surbrillance";
+            case "Régions de France métropolitaine":
+                return "Entrez le nom de la région en surbrillance";
+            case "Toutes les régions françaises":
+                return "Entrez le nom de la région en surbrillance";
+            case "Toutes les régions (carte unique)":
+                return "Entrez le nom de la région en surbrillance";
+            default:
+                return "Entrez le nom de la zone en surbrillance";
+        }
+    };
 
-            {/* Desktop Layout - horizontal row with input and buttons */}
-            <div className="game-buttons-row"> 
-                {/* Main input field for user guesses */}
+    return (
+        <div className="modern-game-controls">
+            {/* Modern input bar at bottom like in screenshot */}
+            <div 
+                className={`input-bar ${isShaking ? 'shake' : ''}`}
+                style={{
+                    position: 'fixed',
+                    bottom: '30px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    backgroundColor: '#fff',
+                    padding: '12px 20px',
+                    borderRadius: '25px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                    border: '1px solid #e0e0e0',
+                    minWidth: '400px',
+                    maxWidth: '600px',
+                    width: '80%',
+                    zIndex: 1001 // Au-dessus de la carte
+                }}
+            >
                 <input
                     ref={inputRef}
                     type="text"
-                    placeholder={
-                      selectedMode === 'franceRegions'
-                        ? 'Entrez le nom de la région...'        // French regions placeholder
-                        : `Entrez le nom du ${gameConfig.unitLabel}...`  // Generic placeholder
-                    }
+                    placeholder={getPlaceholder()}
                     value={guessInput}
                     onChange={(e) => setGuessInput(e.target.value)}
-                    onKeyPress={handleKeyPress}  // Handle Enter key
-                    disabled={!currentCountry}   // Disable when no current entity
+                    onKeyPress={handleKeyPress}
+                    disabled={!currentCountry}
+                    style={{
+                        flex: 1,
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: '16px',
+                        padding: '8px 0',
+                        color: '#333',
+                        backgroundColor: 'transparent'
+                    }}
                 />
                 
-                {/* Skip button - moves current entity to end of queue */}
                 <button 
-                    onClick={handleSkip}
+                    onClick={handleGuess} 
+                    disabled={!currentCountry || !guessInput.trim()}
                     style={{
-                        backgroundColor: '#FFC107',  // Bootstrap warning color (yellow)
-                        color: '#333',
-                        fontWeight: 'bold',
-                        border: 'none',
-                        borderRadius: '20px',
-                        padding: '8px 16px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.3s ease, transform 0.1s ease',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                        fontSize: '0.9em'
-                    }}
-                    disabled={!currentCountry} 
-                >
-                    Passer
-                </button>
-                
-                {/* Hint button - shows first letter with time penalty */}
-                <button 
-                    onClick={handleHint}
-                    style={{
-                        backgroundColor: '#17A2B8',  // Bootstrap info color (blue)
+                        backgroundColor: '#007bff',
                         color: 'white',
-                        fontWeight: 'bold',
                         border: 'none',
-                        borderRadius: '20px',
-                        padding: '8px 16px',
+                        borderRadius: '18px',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
                         cursor: 'pointer',
-                        transition: 'background-color 0.3s ease, transform 0.1s ease',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                        fontSize: '0.9em'
+                        transition: 'all 0.2s ease',
+                        opacity: (!currentCountry || !guessInput.trim()) ? 0.5 : 1
                     }}
-                    disabled={!currentCountry} 
                 >
-                    ?
+                    Valider
                 </button>
-                
-                {/* Submit button - processes the user's guess */}
-                <button onClick={handleGuess} disabled={!currentCountry}>Valider</button> 
             </div>
 
-            {/* Mobile Layout - input above, buttons in horizontal row */}
-            <div className="mobile-input-container">
-                <input
-                    ref={mobileInputRef}
-                    type="text"
-                    placeholder={
-                      selectedMode === 'franceRegions'
-                        ? 'Entrez le nom de la région...'
-                        : `Entrez le nom du ${gameConfig.unitLabel}...`
-                    }
-                    value={guessInput}
-                    onChange={(e) => setGuessInput(e.target.value)}
-                    onKeyPress={handleKeyPress} 
-                    disabled={!currentCountry} 
-                />
-            </div>
-            
-            {/* Mobile buttons container - three buttons in a row */}
-            <div className="mobile-buttons-container">
+            {/* Bottom action buttons like in screenshot */}
+            <div className="bottom-actions" style={{
+                position: 'fixed',
+                bottom: '100px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '15px',
+                zIndex: 1001 // Au-dessus de la carte
+            }}>
+                <button 
+                    onClick={handleHint}
+                    disabled={!currentCountry}
+                    style={{
+                        backgroundColor: '#ffc107',
+                        color: '#333',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    Indice
+                </button>
+                
                 <button 
                     onClick={handleSkip}
+                    disabled={!currentCountry}
                     style={{
-                        backgroundColor: '#FFC107', 
-                        color: '#333',
+                        backgroundColor: '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'all 0.2s ease'
                     }}
-                    disabled={!currentCountry} 
                 >
                     Passer
                 </button>
-                <button 
-                    onClick={handleHint}
-                    style={{
-                        backgroundColor: '#17A2B8', 
-                        color: 'white',
-                    }}
-                    disabled={!currentCountry} 
-                >
-                    ?
-                </button>
-                <button onClick={handleGuess} disabled={!currentCountry}>Valider</button> 
             </div>
+
+            {/* Mobile input for responsive design */}
+            <input
+                ref={mobileInputRef}
+                type="text"
+                style={{ display: 'none' }} // Hidden, only for focus management
+                value={guessInput}
+                onChange={(e) => setGuessInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={!currentCountry}
+            />
         </div>
     );
 };

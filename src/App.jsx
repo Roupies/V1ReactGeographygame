@@ -13,12 +13,17 @@ import HomeScreen from './components/HomeScreen';
 import GameHeader from './components/game/GameHeader';
 import GameControls from './components/game/GameControls';
 import EndGameModal from './components/game/EndGameModal';
+import ScoreStars from './components/game/ScoreStars';
+import HintPopup from './components/game/HintPopup';
 import './App.css';
 
 // Clean, modular App component
 function App() {
     // State management for game mode selection
     const [selectedMode, setSelectedMode] = useState(null);
+    
+    // State for hint popup visibility
+    const [showHintPopup, setShowHintPopup] = useState(false);
     
     // Memoize gameConfig to prevent unnecessary re-renders
     const gameConfig = useMemo(() => {
@@ -53,26 +58,35 @@ function App() {
             gameLogic.initializeGame();
         }
     }, [selectedMode]); // Only depend on selectedMode
+    
+    // Close hint popup when current country changes
+    useEffect(() => {
+        setShowHintPopup(false);
+    }, [gameLogic.currentCountry]);
 
     // Stable goToHome function
     const goToHome = useCallback(() => setSelectedMode(null), []);
+    
+    // Function to close hint popup
+    const closeHintPopup = useCallback(() => setShowHintPopup(false), []);
 
     // Memorize enhanced actions to prevent unnecessary re-renders
     const enhancedActions = useMemo(() => ({
         handleGuess: () => {
             gameLogic.handleGuess();
-            focusManagement.restoreFocus();
+            focusManagement.focusInput();
         },
         handleSkip: () => {
             gameLogic.handleSkip();
-            focusManagement.restoreFocus();
+            focusManagement.focusInput();
         },
         handleHint: () => {
             gameLogic.handleHint();
-            focusManagement.restoreFocus();
+            setShowHintPopup(true); // Show the hint popup
+            focusManagement.focusInput();
         },
         handleKeyPress: gameLogic.handleKeyPress
-    }), [gameLogic.handleGuess, gameLogic.handleSkip, gameLogic.handleHint, gameLogic.handleKeyPress, focusManagement.restoreFocus]);
+    }), [gameLogic.handleGuess, gameLogic.handleSkip, gameLogic.handleHint, gameLogic.handleKeyPress, focusManagement.focusInput]);
 
     // Determine which map component to use based on game configuration
     const renderMapComponent = () => {
@@ -111,8 +125,12 @@ function App() {
             <GameHeader 
                 timeLeft={gameLogic.timeLeft}
                 formatTime={gameLogic.formatTime}
+            />
+
+            <ScoreStars 
                 guessedCount={gameLogic.guessedCountries.length}
                 totalCount={gameLogic.totalCountries}
+                gameConfig={gameConfig}
             />
 
             <div className="map-container">
@@ -129,6 +147,7 @@ function App() {
                 setGuessInput={gameLogic.setGuessInput}
                 feedbackMessage={gameLogic.feedbackMessage}
                 hint={gameLogic.hint}
+                isShaking={gameLogic.isShaking}
                 
                 // Enhanced actions (with focus management)
                 handleGuess={enhancedActions.handleGuess}
@@ -143,6 +162,13 @@ function App() {
                 // Configuration
                 selectedMode={selectedMode}
                 gameConfig={gameConfig}
+            />
+
+            <HintPopup 
+                hint={showHintPopup ? gameLogic.hint : null}
+                currentCountry={gameLogic.currentCountry}
+                gameConfig={gameConfig}
+                onClose={closeHintPopup}
             />
 
             <EndGameModal

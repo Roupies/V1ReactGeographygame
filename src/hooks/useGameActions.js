@@ -16,6 +16,7 @@ export const useGameActions = (
     const [guessInput, setGuessInput] = useState('');
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [hint, setHint] = useState('');
+    const [isShaking, setIsShaking] = useState(false);
 
     // Process user guess
     const handleGuess = () => {
@@ -42,8 +43,14 @@ export const useGameActions = (
             gameState.markEntityAsGuessed(gameState.currentCountry);
             setGuessInput('');
             setHint('');
+            setIsShaking(false); // Arrêter la secousse si bonne réponse
         } else {
             setFeedbackMessage(`Faux. Ce n'est pas ${guessInput.trim()}.`);
+            setGuessInput(''); // Vider l'input même pour les mauvaises réponses
+            
+            // Déclencher l'animation de secousse
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500); // Arrêter la secousse après 500ms
         }
     };
 
@@ -59,6 +66,7 @@ export const useGameActions = (
         setFeedbackMessage("");
         setGuessInput('');
         setHint('');
+        setIsShaking(false); // Arrêter la secousse quand on skip
     };
 
     // Show hint with time penalty
@@ -91,6 +99,7 @@ export const useGameActions = (
         setGuessInput('');
         setFeedbackMessage('');
         setHint('');
+        setIsShaking(false);
     };
 
     return {
@@ -99,6 +108,7 @@ export const useGameActions = (
         setGuessInput,
         feedbackMessage,
         hint,
+        isShaking,
         
         // Actions
         handleGuess,
