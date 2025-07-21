@@ -5,7 +5,8 @@ const HintPopup = ({
     hint, 
     currentCountry, 
     gameConfig,
-    onClose 
+    onClose,
+    theme 
 }) => {
     // Don't render if no hint
     if (!hint || !currentCountry) {
@@ -45,11 +46,11 @@ const HintPopup = ({
                 left: '30px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                backgroundColor: '#fff',
+                backgroundColor: theme?.colors?.inputBg || '#fff',
                 padding: '20px',
                 borderRadius: '15px',
                 boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                border: '1px solid #e0e0e0',
+                border: `1px solid ${theme?.colors?.inputBorder || '#e0e0e0'}`,
                 maxWidth: '280px',
                 zIndex: 1000,
                 animation: 'slideInLeft 0.3s ease'
@@ -87,7 +88,7 @@ const HintPopup = ({
                 <div style={{
                     width: '24px',
                     height: '24px',
-                    backgroundColor: '#ffc107',
+                    backgroundColor: theme?.colors?.buttonHint || '#ffc107',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -103,7 +104,7 @@ const HintPopup = ({
                     margin: 0,
                     fontSize: '16px',
                     fontWeight: '600',
-                    color: '#333'
+                    color: theme?.colors?.inputText || '#333'
                 }}>
                     Indice
                 </h4>
@@ -114,7 +115,7 @@ const HintPopup = ({
                 margin: 0,
                 fontSize: '14px',
                 lineHeight: '1.4',
-                color: '#666'
+                color: theme?.colors?.inputText || '#666'
             }}>
                 {getHintText()}
             </p>

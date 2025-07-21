@@ -16,8 +16,8 @@ export const GAME_MODES = {
     unitLabel: 'pays',                        // Label for entities (used in UI messages)
     geoIdProperty: 'ISO_A3',                  // Property name for matching entities to map
     projectionConfig: { 
-      rotate: [-5, -35, 0],                   // Map rotation [longitude, latitude, roll]
-      scale: 350                              // Map zoom level
+      rotate: [-8, -50, 0],                   // Map rotation [longitude, latitude, roll] - focus plus au sud
+      scale: 550                              // Map zoom level - légèrement dézoomé pour voir plus d'Europe
     },
   },
   

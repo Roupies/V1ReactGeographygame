@@ -25,7 +25,8 @@ const GameControls = ({
     
     // Configuration
     selectedMode,
-    gameConfig
+    gameConfig,
+    theme
 }) => {
     // Don't render if game ended or no current entity
     if (gameEnded || !currentCountry) {
@@ -54,17 +55,17 @@ const GameControls = ({
                 className={`input-bar ${isShaking ? 'shake' : ''}`}
                 style={{
                     position: 'fixed',
-                    bottom: '30px',
+                    bottom: '80px', // Remonté pour laisser place aux boutons en dessous
                     left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '15px',
-                    backgroundColor: '#fff',
+                    backgroundColor: theme?.colors?.inputBg || '#fff',
                     padding: '12px 20px',
                     borderRadius: '25px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                    border: '1px solid #e0e0e0',
+                    border: `1px solid ${theme?.colors?.inputBorder || '#e0e0e0'}`,
                     minWidth: '400px',
                     maxWidth: '600px',
                     width: '80%',
@@ -85,7 +86,7 @@ const GameControls = ({
                         outline: 'none',
                         fontSize: '16px',
                         padding: '8px 0',
-                        color: '#333',
+                        color: theme?.colors?.inputText || '#333',
                         backgroundColor: 'transparent'
                     }}
                 />
@@ -94,7 +95,7 @@ const GameControls = ({
                     onClick={handleGuess} 
                     disabled={!currentCountry || !guessInput.trim()}
                     style={{
-                        backgroundColor: '#007bff',
+                        backgroundColor: theme?.colors?.buttonPrimary || '#007bff',
                         color: 'white',
                         border: 'none',
                         borderRadius: '18px',
@@ -110,10 +111,10 @@ const GameControls = ({
                 </button>
             </div>
 
-            {/* Bottom action buttons like in screenshot */}
+            {/* Bottom action buttons like in screenshot - now below input */}
             <div className="bottom-actions" style={{
                 position: 'fixed',
-                bottom: '100px',
+                bottom: '20px', // En dessous de l'input maintenant
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
@@ -124,7 +125,7 @@ const GameControls = ({
                     onClick={handleHint}
                     disabled={!currentCountry}
                     style={{
-                        backgroundColor: '#ffc107',
+                        backgroundColor: theme?.colors?.buttonHint || '#ffc107',
                         color: '#333',
                         border: 'none',
                         borderRadius: '20px',
@@ -143,7 +144,7 @@ const GameControls = ({
                     onClick={handleSkip}
                     disabled={!currentCountry}
                     style={{
-                        backgroundColor: '#6c757d',
+                        backgroundColor: theme?.colors?.buttonSkip || '#6c757d',
                         color: 'white',
                         border: 'none',
                         borderRadius: '20px',

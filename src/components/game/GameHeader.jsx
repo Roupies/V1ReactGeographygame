@@ -4,27 +4,24 @@ import React from 'react';
 
 const GameHeader = ({ 
     timeLeft, 
-    formatTime
+    formatTime,
+    theme
 }) => {
     return (
         <div className="game-header">
-            {/* Timer display - centered at top like in screenshot */}
+            {/* Timer display - themed */}
             <div className="timer-display" style={{ 
                 position: 'absolute', 
                 top: '20px', 
                 left: '50%', 
                 transform: 'translateX(-50%)',
-                backgroundColor: '#2C3E50',  // Dark blue-gray like screenshot
-                padding: '12px 20px', 
-                borderRadius: '25px', 
-                color: '#FFF', 
-                fontWeight: 'bold',
-                fontSize: '1.4em', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                minWidth: '120px', 
+                color: theme?.colors?.timer || '#2C3E50',
+                fontWeight: '900',
+                fontSize: '1.8em',
                 textAlign: 'center',
                 letterSpacing: '1px',
-                fontFamily: 'monospace' // For better time display
+                fontFamily: 'monospace',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
                 {formatTime(timeLeft)}
             </div>

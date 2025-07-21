@@ -15,9 +15,7 @@ const EUROPEAN_SUBREGIONS = [
     "Central Europe" 
 ];
 
-// Color scheme for map visualization
-const NON_EUROPEAN_COUNTRY_FILL = "#232323"; // Very dark gray for non-European countries
-const EUROPEAN_DEFAULT_FILL = "#505050"; // Medium gray for European countries
+// Color scheme will be dynamically set from theme
 
 // Coordinate definitions for micro-states that are too small to see on the map
 // These coordinates are in [longitude, latitude] format for precise positioning
@@ -32,15 +30,15 @@ const MARKER_COORDINATES = {
 
 // Map projection configurations for different screen sizes
 // These control zoom level, rotation, and centering of the map
-const DEFAULT_PROJECTION = { rotate: [-5.0, -35.0, 0], scale: 350 };
+const DEFAULT_PROJECTION = { rotate: [-5.0, -30.0, 0], scale: 300 }; // Dézoomé et focus vers le nord
 const TABLET_PROJECTION = { 
-    rotate: [-8.0, -50.0, 0],
-    scale: 650, // Slightly zoomed out compared to mobile
+    rotate: [-8.0, -45.0, 0], // Focus vers le nord
+    scale: 550, // Dézoomé pour éviter l'empiètement sur les pays nordiques
     center: [0, 0]
 };
 const MOBILE_PROJECTION = { 
-    rotate: [-8.0, -50.0, 0], // Same rotation as tablet to center Europe
-    scale: 1000,              // More zoomed in for mobile screens
+    rotate: [-8.0, -45.0, 0], // Focus vers le nord
+    scale: 850,              // Dézoomé pour éviter l'empiètement
     center: [0, 0]            // Centered instead of offset
 };
 
@@ -50,7 +48,8 @@ const MapChart = ({
     guessedCountries,    // Array of successfully guessed entities (shown in green)
     geoJsonPath,         // Path to GeoJSON data file
     geoIdProperty = 'ISO_A3',  // Property name for matching entities (ISO_A3 for countries, code for regions)
-    projectionConfig     // Map projection settings from game configuration
+    projectionConfig,    // Map projection settings from game configuration
+    theme               // Theme colors
 }) => { 
     // State for managing responsive map projection
     const [currentProjection, setCurrentProjection] = useState(projectionConfig || DEFAULT_PROJECTION);
@@ -63,10 +62,12 @@ const MapChart = ({
     }, [projectionConfig]);
 
     // Memoize European country codes to prevent recalculation
-    const europeanCountryCodes = useMemo(() => 
-        EUROPEAN_COUNTRIES.map(c => String(c.isoCode)), 
-        []
-    );
+    const europeanCountryCodes = useMemo(() => {
+        const codes = EUROPEAN_COUNTRIES.map(c => String(c.isoCode));
+        // Ajouter les variantes possibles pour le Kosovo
+        codes.push('XKX', 'KOS', 'XK', 'KX', '-99'); // Différents codes possibles pour le Kosovo
+        return codes;
+    }, []);
     
     // Determine if we're in Europe mode (for micro-states markers display)
     const isEuropeMode = geoIdProperty === 'ISO_A3';
@@ -85,11 +86,11 @@ const MapChart = ({
             String(currentCountry.code) === geoId || String(currentCountry.isoCode) === geoId
         );
 
-        // Current entity styling - bright red with no border for maximum visibility
+        // Current entity styling - themed current color
         if (isCurrent) {
             const style = { 
-                fill: "#FF4D4D",           // Bright red
-                stroke: "transparent",      // No border
+                fill: theme?.colors?.countryCurrent || "#FF4D4D",
+                stroke: "transparent",
                 strokeWidth: 0,
                 outline: "none",
                 strokeOpacity: 0
@@ -100,11 +101,11 @@ const MapChart = ({
                 pressed: style   // Same style when clicked
             };
         } 
-        // Successfully guessed entities - green with white border
+        // Successfully guessed entities - themed guessed color
         else if (isGuessed) {
             const style = { 
-                fill: "#A8D9A7",      // Light green
-                stroke: "#FFFFFF",     // White border
+                fill: theme?.colors?.countryGuessed || "#A8D9A7",
+                stroke: theme?.colors?.countryBorder || "#FFFFFF",
                 strokeWidth: 0.5, 
                 outline: "none" 
             };
@@ -120,12 +121,128 @@ const MapChart = ({
         if (geoIdProperty === 'ISO_A3') {
             const isEuropean = europeanCountryCodes.includes(geoId);
             
+            // Liste des pays non-européens qui touchent la mer (pour bordure blanche)
+            const coastalNonEuropeanCountries = [
+                'DZA', // Algérie
+                'TUN', // Tunisie
+                'LBY', // Libye
+                'EGY', // Égypte
+                'ISR', // Israël
+                'LBN', // Liban
+                'SYR', // Syrie
+                'TUR', // Turquie
+                'GEO', // Géorgie
+                'AZE', // Azerbaïdjan
+                'KAZ', // Kazakhstan
+                'TKM', // Turkménistan
+                'IRN', // Iran
+                'IRQ', // Irak
+                'SAU', // Arabie Saoudite
+                'YEM', // Yémen
+                'OMN', // Oman
+                'ARE', // Émirats Arabes Unis
+                'QAT', // Qatar
+                'BHR', // Bahreïn
+                'KWT', // Koweït
+                'JOR', // Jordanie
+                'MAR', // Maroc
+                'ESH', // Sahara Occidental
+                'MRT', // Mauritanie
+                'SEN', // Sénégal
+                'GMB', // Gambie
+                'GNB', // Guinée-Bissau
+                'GIN', // Guinée
+                'SLE', // Sierra Leone
+                'LBR', // Libéria
+                'CIV', // Côte d'Ivoire
+                'GHA', // Ghana
+                'TGO', // Togo
+                'BEN', // Bénin
+                'NGA', // Nigeria
+                'CMR', // Cameroun
+                'GNQ', // Guinée équatoriale
+                'GAB', // Gabon
+                'COG', // République du Congo
+                'COD', // République démocratique du Congo
+                'AGO', // Angola
+                'NAM', // Namibie
+                'ZAF', // Afrique du Sud
+                'LSO', // Lesotho
+                'SWZ', // Eswatini
+                'MOZ', // Mozambique
+                'ZWE', // Zimbabwe
+                'BWA', // Botswana
+                'ZMB', // Zambie
+                'MWI', // Malawi
+                'TZA', // Tanzanie
+                'KEN', // Kenya
+                'SOM', // Somalie
+                'ETH', // Éthiopie
+                'ERI', // Érythrée
+                'DJI', // Djibouti
+                'SDN', // Soudan
+                'SSD', // Soudan du Sud
+                'CAF', // République centrafricaine
+                'TCD', // Tchad
+                'NER', // Niger
+                'MLI', // Mali
+                'BFA', // Burkina Faso
+                'CIV', // Côte d'Ivoire
+                'GHA', // Ghana
+                'TGO', // Togo
+                'BEN', // Bénin
+                'NGA', // Nigeria
+                'CMR', // Cameroun
+                'GNQ', // Guinée équatoriale
+                'GAB', // Gabon
+                'COG', // République du Congo
+                'COD', // République démocratique du Congo
+                'AGO', // Angola
+                'NAM', // Namibie
+                'ZAF', // Afrique du Sud
+                'LSO', // Lesotho
+                'SWZ', // Eswatini
+                'MOZ', // Mozambique
+                'ZWE', // Zimbabwe
+                'BWA', // Botswana
+                'ZMB', // Zambie
+                'MWI', // Malawi
+                'TZA', // Tanzanie
+                'KEN', // Kenya
+                'SOM', // Somalie
+                'ETH', // Éthiopie
+                'ERI', // Érythrée
+                'DJI', // Djibouti
+                'SDN', // Soudan
+                'SSD', // Soudan du Sud
+                'CAF', // République centrafricaine
+                'TCD', // Tchad
+                'NER', // Niger
+                'MLI', // Mali
+                'BFA', // Burkina Faso
+            ];
+            
+            const isCoastalNonEuropean = coastalNonEuropeanCountries.includes(geoId);
+            
             if (isEuropean) {
-                // European countries - medium gray with white border
+                // European countries - themed default color
                 const style = {
-                    fill: EUROPEAN_DEFAULT_FILL,
-                    stroke: "#FFFFFF",
-                    strokeWidth: 0.5,
+                    fill: theme?.colors?.countryDefault || "#505050",
+                    stroke: theme?.colors?.countryBorder || "#FFFFFF",
+                    strokeWidth: 1.0,
+                    outline: "none"
+                };
+                return {
+                    default: style,
+                    hover: style,
+                    pressed: style
+                };
+            } else if (isCoastalNonEuropean) {
+                // Non-European coastal countries - bordure blanche SEULEMENT avec la mer
+                const style = {
+                    fill: theme?.colors?.countryNonEuropean || "#232323",
+                    stroke: "#FFFFFF", // Bordure blanche extra épaisse pour les côtes (mer)
+                    strokeWidth: 4.0,
                     outline: "none"
                 };
                 return {
@@ -134,11 +251,11 @@ const MapChart = ({
                     pressed: style
                 };
             } else {
-                // Non-European countries - very dark gray, no border
+                // Non-European non-coastal countries - bordure très marquée (pour les frontières terrestres)
                 const style = {
-                    fill: NON_EUROPEAN_COUNTRY_FILL,
-                    stroke: "none",
-                    strokeWidth: 0,
+                    fill: theme?.colors?.countryNonEuropean || "#232323",
+                    stroke: "#FFFFFF", // Bordure blanche très marquée pour les frontières
+                    strokeWidth: 2.5,
                     outline: "none"
                 };
                 return {
@@ -151,8 +268,8 @@ const MapChart = ({
 
         // --- DEFAULT STYLING (for regions mode, etc.) ---
         const style = { 
-            fill: '#505050',      // Medium gray
-            stroke: '#FFFFFF',    // White borders
+            fill: theme?.colors?.countryDefault || '#505050',
+            stroke: theme?.colors?.countryBorder || '#FFFFFF',
             strokeWidth: 0.5, 
             outline: 'none' 
         };
@@ -161,7 +278,7 @@ const MapChart = ({
             hover: style,
             pressed: style
         };
-    }, [currentCountry, guessedCountries, geoIdProperty, europeanCountryCodes]);
+    }, [currentCountry, guessedCountries, geoIdProperty, europeanCountryCodes, theme]);
 
     // Memoize marker style function
     const getMarkerStyle = useMemo(() => (entityId) => {
@@ -181,7 +298,7 @@ const MapChart = ({
             };
         } else if (isGuessed) {
             return {
-                fill: "#A8D9A7",    // Green for guessed entities
+                fill: "#B3D9E6",    // Blue for guessed micro-states
                 stroke: "none", 
                 strokeWidth: 0,
                 radius: 4           // Medium size for guessed
@@ -197,11 +314,25 @@ const MapChart = ({
     }, [currentCountry, guessedCountries]);
 
     return (
-        <div className="map-container" style={{ width: "100%", height: "100%" }}>
+        <div className="map-container" style={{ 
+            width: "100%", 
+            height: "100%",
+            backgroundColor: theme?.colors?.mapBackground || '#f5f5f5',
+            backgroundImage: theme?.colors?.mapBackgroundImage || 'none',
+            backgroundSize: '60px 60px',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'repeat',
+            position: 'relative'
+        }}>
             {/* Main map component with azimuthal equal-area projection */}
             <ComposableMap 
                 projection="geoAzimuthalEqualArea" 
                 projectionConfig={currentProjection}
+                style={{
+                    background: 'transparent',
+                    width: '100%',
+                    height: '100%'
+                }}
             >
                 {/* Geographic regions rendering */}
                 <Geographies geography={geoJsonPath}>

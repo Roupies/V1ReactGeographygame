@@ -1,5 +1,21 @@
 /* src/App.css */
 
+/* Animation for multiplayer turn indicator */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Styles généraux pour le document HTML, le corps et l'élément racine de l'application React */
 html, body, #root {
   margin: 0; /* Supprime les marges par défaut du navigateur */
@@ -8,8 +24,8 @@ html, body, #root {
   overflow: hidden; /* Empêche le défilement de la page, car la carte et l'UI sont gérées en interne */
   font-family: 'Arial', sans-serif; /* Définit une police de caractères par défaut */
   
-  /* Couleur de fond des mers/océans et des zones hors de la carte de l'Europe. */
-  background-color: #183040; 
+  /* Background simple pour l'app */
+  background-color: #f5f5f5;
 }
 
 /* Style du conteneur principal de l'application React */

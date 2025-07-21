@@ -8,7 +8,8 @@ const DualMapChart = ({
     gameConfig,
     currentCountry,
     guessedCountries,
-    projectionConfig // This will be ignored since each zone has its own
+    projectionConfig, // This will be ignored since each zone has its own
+    theme
 }) => {
     // Verify that the game config supports dual maps
     if (!gameConfig?.zones || !Array.isArray(gameConfig.zones)) {
@@ -55,6 +56,7 @@ const DualMapChart = ({
                             geoJsonPath={zone.geoJson}
                             geoIdProperty={gameConfig.geoIdProperty}
                             projectionConfig={zone.projectionConfig}
+                            theme={theme}
                         />
                     </div>
                 );

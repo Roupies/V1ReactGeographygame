@@ -29,7 +29,7 @@ export const useResponsiveProjection = (selectedMode, gameConfig) => {
         if (selectedMode === 'europe') {
             return {
                 ...baseConfig,
-                scale: isMobileOrTablet ? 900 : baseConfig.scale,
+                scale: isMobileOrTablet ? 1000 : baseConfig.scale, // Zoom plus important sur mobile
                 rotate: isMobileOrTablet ? 
                     [baseConfig.rotate[0], -50, baseConfig.rotate[2]] : 
                     baseConfig.rotate

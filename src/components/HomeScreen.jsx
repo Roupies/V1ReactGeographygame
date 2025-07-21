@@ -4,7 +4,7 @@ import React from 'react';
 import { GAME_MODES } from '../data/gameModes';
 
 // Main home screen component - renders mode selection interface
-export default function HomeScreen({ onSelectMode }) {
+export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
   return (
     <div style={{
       display: 'flex',
@@ -26,6 +26,31 @@ export default function HomeScreen({ onSelectMode }) {
       }}>
         Choisissez un mode de jeu
       </h1>
+      
+      {/* Game mode type selection */}
+      <div style={{
+        display: 'flex',
+        gap: '20px',
+        marginBottom: '30px',
+        flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
+      }}>
+        <h2 style={{ 
+          color: '#ffffff', 
+          fontSize: '1.5em',
+          textAlign: 'center',
+          margin: 0
+        }}>
+          Solo
+        </h2>
+        <h2 style={{ 
+          color: '#28a745', 
+          fontSize: '1.5em',
+          textAlign: 'center',
+          margin: 0
+        }}>
+          Multijoueur
+        </h2>
+      </div>
       
       {/* Mode selection buttons container with responsive layout */}
       <div style={{ 
@@ -75,6 +100,41 @@ export default function HomeScreen({ onSelectMode }) {
             {config.label}                        {/* Display mode name from configuration */}
           </button>
         ))}
+      </div>
+      
+      {/* Multiplayer section */}
+      <div style={{
+        marginTop: '40px',
+        display: 'flex',
+        justifyContent: 'center'
+      }}>
+        <button
+          onClick={onSelectMultiplayer}
+          style={{
+            padding: window.innerWidth <= 480 ? '20px 40px' : '25px 50px',
+            fontSize: window.innerWidth <= 480 ? '1.3em' : '1.6em',
+            borderRadius: '25px',
+            border: 'none',
+            background: '#28a745',              // Green for multiplayer
+            color: 'white',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+            transition: 'background 0.2s, transform 0.1s',
+            width: window.innerWidth <= 480 ? '100%' : 'auto',
+            maxWidth: '300px'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.background = '#1e7e34';     // Darker green on hover
+            e.target.style.transform = 'translateY(-2px)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.background = '#28a745';     // Return to original green
+            e.target.style.transform = 'translateY(0)';
+          }}
+        >
+          🎮 Multijoueur (2 joueurs)
+        </button>
       </div>
     </div>
   );
