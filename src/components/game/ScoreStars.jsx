@@ -1,5 +1,6 @@
 // Component for stylized score display with 3 stars and trophy cup, separated by horizontal segments
 import React from 'react';
+import { IoTrophy } from "react-icons/io5";
 
 const ScoreStars = ({ 
     guessedCountries, 
@@ -25,74 +26,7 @@ const ScoreStars = ({
     const progress = totalCountries > 0 ? (guessedCount / totalCountries) : 0;
     
     // Trophy SVG component with themed colors and round border like stars
-    const TrophyIcon = ({ filled }) => (
-        <span style={{
-            backgroundColor: '#D9E2DA', // Bordure ronde comme les étoiles
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 8px', // Même espacement que les étoiles
-            transition: 'all 0.3s ease'
-        }}>
-            <svg 
-                width="28" 
-                height="28" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                style={{
-                    filter: filled ? `drop-shadow(0 2px 4px rgba(3, 157, 191, 0.4))` : 'none'
-                }}
-            >
-                {/* Coupe élégante avec forme de calice */}
-                <path 
-                    d="M7 6C7 4.9 7.9 4 9 4H15C16.1 4 17 4.9 17 6V10C17 11.1 16.1 12 15 12H9C7.9 12 7 11.1 7 10V6Z" 
-                    fill={filled ? '#039DBF' : '#039DBF'}
-                />
-                
-                {/* Tige de la coupe */}
-                <rect 
-                    x="10" 
-                    y="12" 
-                    width="4" 
-                    height="4" 
-                    fill={filled ? '#039DBF' : '#039DBF'}
-                    rx="1"
-                />
-                
-                {/* Base de la coupe */}
-                <rect 
-                    x="8" 
-                    y="16" 
-                    width="8" 
-                    height="2" 
-                    fill={filled ? '#039DBF' : '#039DBF'}
-                    rx="1"
-                />
-                
-                {/* Poignées élégantes */}
-                <path 
-                    d="M6 8C6 7.45 6.45 7 7 7H8V9C8 9.55 7.55 10 7 10C6.45 10 6 9.55 6 9V8Z" 
-                    fill={filled ? '#039DBF' : '#039DBF'}
-                />
-                <path 
-                    d="M16 8C16 7.45 16.45 7 17 7H18V9C18 9.55 17.55 10 17 10C16.45 10 16 9.55 16 9V8Z" 
-                    fill={filled ? '#039DBF' : '#039DBF'}
-                />
-                
-                {/* Étoile brillante quand rempli */}
-                {filled && (
-                    <path 
-                        d="M12 7L13 9L15 9L13.5 10.5L14 12.5L12 11.5L10 12.5L10.5 10.5L9 9L11 9L12 7Z" 
-                        fill="#FFD700"
-                    />
-                )}
-            </svg>
-        </span>
-    );
-
+    // (SUPPRIMÉ)
     // Star component with themed styling
     const StarIcon = ({ filled }) => (
         <span style={{
@@ -158,6 +92,23 @@ const ScoreStars = ({
         );
     };
 
+    // TrophyIcon remplacé par IoTrophy avec fond comme les étoiles
+    const TrophyIcon = ({ filled }) => (
+        <span style={{
+            backgroundColor: filled ? '#FFFFFF' : '#D9E2DA', // Même fond que les étoiles
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 8px',
+            transition: 'all 0.3s ease'
+        }}>
+            <IoTrophy size={20} color="#A9BDAD" />
+        </span>
+    );
+
     return (
         <div style={{
             position: 'absolute',
@@ -191,7 +142,7 @@ const ScoreStars = ({
                 
                 <ProgressiveSegment segmentIndex={2} />
                 
-                {/* Trophy */}
+                {/* IoTrophyOutline icon à la place du trophée */}
                 <TrophyIcon filled={trophyFilled} />
             </div>
             

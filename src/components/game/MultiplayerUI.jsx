@@ -308,9 +308,9 @@ export function GameMessages({ messages, style = {}, onSendMessage, currentPlaye
           color: 'white', 
           margin: '0', 
           fontSize: '1em'
-        }}>
-          Messages
-        </h4>
+      }}>
+        Messages
+      </h4>
         <button
           onClick={() => setShowChat(!showChat)}
           style={{

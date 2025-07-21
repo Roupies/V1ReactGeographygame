@@ -17,11 +17,12 @@ const GameHeader = ({
                 transform: 'translateX(-50%)',
                 color: theme?.colors?.timer || '#2C3E50',
                 fontWeight: '900',
-                fontSize: '1.8em',
+                fontSize: '3.2em', // Plus grand
                 textAlign: 'center',
                 letterSpacing: '1px',
                 fontFamily: 'monospace',
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                zIndex: 100
             }}>
                 {formatTime(timeLeft)}
             </div>

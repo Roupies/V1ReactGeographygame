@@ -299,8 +299,8 @@ const MapChart = ({
         } else if (isGuessed) {
             return {
                 fill: "#B3D9E6",    // Blue for guessed micro-states
-                stroke: "none", 
-                strokeWidth: 0,
+                stroke: "#0B6B89", // Couleur de contour demandée
+                strokeWidth: 1,     // Contour fin
                 radius: 4           // Medium size for guessed
             };
         } else {
