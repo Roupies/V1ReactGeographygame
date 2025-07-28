@@ -1,0 +1,10 @@
+{
+  "name": "shared-game-data",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Shared data module for client and server",
+  "main": "data/entities.js",
+  "exports": {
+    "./data/entities.js": "./data/entities.js"
+  }
+} 

@@ -3,7 +3,6 @@
 // Follows Dependency Inversion Principle - depends on abstractions
 // Now uses GameManager for validation and feedback messages
 import { useState } from 'react';
-import { normalizeString } from '../data/countries';
 
 /**
  * Game actions hook - now uses GameManager for validation and feedback

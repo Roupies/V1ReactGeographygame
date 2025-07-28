@@ -111,10 +111,38 @@ europeCapitals: {
 
 ## Compatibilité
 
-- ✅ **Rétrocompatibilité** : Tous les modes existants fonctionnent
-- ✅ **Multijoueur** : Architecture compatible
-- ✅ **Dual Maps** : Support des cartes multiples (France + DOM-TOM)
-- ✅ **Mobile/Desktop** : Responsive design maintenu
+✅ **Rétrocompatibilité** : Tous les modes existants fonctionnent sans modification
+✅ **Performance** : Pas d'impact sur les performances, architecture optimisée
+✅ **Évolutivité** : Nouveaux modes ajoutables facilement
+
+## Module de Données Partagées 🆕
+
+### ✅ **Problème Résolu**
+- **Avant** : Duplication de données entre client (92 entités) et serveur (83 entités)
+- **Après** : Module unique `shared/data/entities.js` avec **46 pays + 18 régions**
+
+### 🏗️ **Architecture Unifiée**
+```
+shared/
+├── data/entities.js    # Source unique de vérité
+├── package.json        # Configuration ES modules
+└── README.md          # Documentation
+
+Client (React) ←── shared/data/entities.js ──→ Serveur (Node.js)
+```
+
+### 🔄 **Fonctions Partagées**
+- **`normalizeString()`** : Normalisation NFD unifiée
+- **`validateAnswer()`** : Validation identique client-serveur
+- **`GAME_MODE_CONFIGS`** : Configuration serveur standardisée
+
+### ✅ **Bénéfices**
+1. **Synchronisation garantie** : Pas de désynchronisation possible
+2. **Maintenance simplifiée** : Une seule modification propage partout
+3. **Validation cohérente** : Même résultats client et serveur
+4. **Extensibilité** : Ajout de nouveaux pays/régions en un endroit
+
+Cette architecture élimine définitivement les bugs de désynchronisation entre client et serveur ! 🚀
 
 ## Documentation
 

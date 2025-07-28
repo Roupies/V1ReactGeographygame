@@ -1,7 +1,6 @@
 // Game modes configuration - refactored to use GameManager
 // This modular approach allows easy addition of new game modes without code changes
-import { EUROPEAN_COUNTRIES } from './countries';
-import { FRENCH_REGIONS, FRENCH_REGIONS_WITH_NAMES } from './regions';
+import { EUROPEAN_COUNTRIES, FRENCH_REGIONS } from '../../shared/data/entities.js';
 import gameManager from '../services/GameManager';
 
 // Mode configurations for GameManager
@@ -17,6 +16,10 @@ const MODE_CONFIGS = {
     projectionConfig: { 
       rotate: [-8, -50, 0],
       scale: 550
+    },
+    responsiveProjection: {
+      mobileScale: 1000,
+      mobileRotate: [-8, -50, 0]
     },
     victoryCondition: 'all_entities',
     feedbackMessages: {

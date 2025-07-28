@@ -2,6 +2,8 @@
  * GameManager - Service central pour la gestion des modes de jeu
  * Centralise : modes, entités, cartes, règles, feedbacks, timer
  */
+import { normalizeString } from '../../shared/data/entities.js';
+
 class GameManager {
   constructor() {
     this.soloModes = {};
@@ -50,7 +52,7 @@ class GameManager {
   }
 
   /**
-   * Valide une réponse contre une entité
+   * Valide une réponse contre une entité - logique identique au serveur
    * @param {string} guess - Réponse du joueur
    * @param {Object} entity - Entité à deviner
    * @returns {boolean} Vrai si correct
@@ -58,20 +60,17 @@ class GameManager {
   validateAnswer(guess, entity) {
     if (!guess || !entity) return false;
     
-    const normalizedGuess = guess.toLowerCase().trim();
-    const name = entity.name.toLowerCase();
+    const normalizedGuess = normalizeString(guess);
     
     // Vérifier le nom principal
-    if (name === normalizedGuess) return true;
-    
-    // Vérifier les noms alternatifs
-    if (entity.altNames) {
-      return entity.altNames.some(alt => 
-        alt.toLowerCase() === normalizedGuess
-      );
+    if (normalizeString(entity.name) === normalizedGuess) {
+      return true;
     }
     
-    return false;
+    // Vérifier les noms alternatifs
+    return entity.altNames?.some(altName => 
+      normalizeString(altName) === normalizedGuess
+    ) || false;
   }
 
   // === GESTION DES CARTES ===
@@ -271,7 +270,7 @@ class GameManager {
   findEntityByName(modeKey, entityName, isMultiplayer = false) {
     const entities = this.getEntities(modeKey, isMultiplayer);
     return entities.find(entity => 
-      entity.name.toLowerCase() === entityName.toLowerCase()
+      normalizeString(entity.name) === normalizeString(entityName)
     ) || null;
   }
 

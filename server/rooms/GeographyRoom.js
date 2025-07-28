@@ -1,6 +1,6 @@
 import { Room } from '@colyseus/core';
 import { GameState, Player, Country } from '../../src/schemas/GameState.js';
-import { SERVER_DATA, validateAnswer } from '../data/shared.js';
+import { GAME_MODE_CONFIGS, validateAnswer } from '../../shared/data/entities.js';
 
 export class GeographyRoom extends Room {
   maxClients = 10;
@@ -25,7 +25,7 @@ export class GeographyRoom extends Room {
   initializeCountries() {
     this.state.remainingCountries.clear();
     
-    const modeData = SERVER_DATA[this.state.gameMode];
+    const modeData = GAME_MODE_CONFIGS[this.state.gameMode];
     if (!modeData) {
       console.error(`Mode ${this.state.gameMode} not found`);
       return;
@@ -37,12 +37,9 @@ export class GeographyRoom extends Room {
       const entity = new Country();
       entity.name = entityData.name;
       
-      // Gérer les différentes propriétés selon le mode
-      if (this.state.gameMode === "franceRegions" || this.state.gameMode === "franceComplete") {
-        entity.isoCode = entityData.code;
-      } else {
-        entity.isoCode = entityData.isoCode;
-      }
+      // Utiliser la propriété idProperty de la configuration du mode
+      const idProperty = modeData.idProperty || 'isoCode';
+      entity.isoCode = entityData[idProperty];
       
       this.state.remainingCountries.push(entity);
     });
@@ -71,7 +68,7 @@ export class GeographyRoom extends Room {
     
     // Send welcome message
     client.send("welcome", {
-      message: `Welcome ${player.name}! Waiting for other players...`,
+      message: `Bienvenue ${player.name} ! En attente d'autres joueurs...`,
       roomId: this.roomId,
       gameMode: this.state.gameMode
     });
@@ -89,12 +86,12 @@ export class GeographyRoom extends Room {
       // Notify other players
       this.broadcast("playerLeft", {
         playerName: player.name,
-        message: `${player.name} left the game`
+        message: `${player.name} a quitté le jeu`
       });
       
       // If game was in progress, end it
       if (this.state.gameStarted && !this.state.gameEnded) {
-        this.endGame("player_left");
+        this.endGame(`${player.name} a quitté le jeu`);
       }
     }
   }
@@ -114,7 +111,7 @@ export class GeographyRoom extends Room {
       
       // Check if all players are ready
       const allReady = Array.from(this.state.players.values()).every(p => p.isReady);
-      if (allReady && this.state.players.size >= 1) {
+      if (allReady && this.state.players.size >= 2) {
         this.startGame();
       }
     }
@@ -130,9 +127,13 @@ export class GeographyRoom extends Room {
     const playerIds = Array.from(this.state.players.keys());
     this.state.currentTurn = playerIds[0];
     
+    // Get the first player's name
+    const firstPlayer = this.state.players.get(this.state.currentTurn);
+    
     this.broadcast("gameStarted", {
       message: "Game started!",
-      firstTurn: this.state.currentTurn
+      firstTurn: this.state.currentTurn,
+      firstPlayer: firstPlayer ? firstPlayer.name : 'Unknown Player'
     });
     
     this.nextCountry();
@@ -151,7 +152,6 @@ export class GeographyRoom extends Room {
     console.log(`Current country: ${country.name}`);
     
     this.broadcast("newCountry", {
-      countryName: country.name,
       countryCode: country.isoCode
     });
     
@@ -191,7 +191,7 @@ export class GeographyRoom extends Room {
     console.log(`${player.name} guessed: ${guess}`);
     
     // Validate answer using shared data
-    const modeData = SERVER_DATA[this.state.gameMode];
+    const modeData = GAME_MODE_CONFIGS[this.state.gameMode];
     const isCorrect = validateAnswer(guess, correctAnswer, modeData.entities);
     
     if (isCorrect) {
@@ -261,8 +261,12 @@ export class GeographyRoom extends Room {
     
     console.log(`Switched to ${this.state.currentTurn}'s turn`);
     
+    // Get the player name for the message
+    const nextPlayer = this.state.players.get(this.state.currentTurn);
+    
     this.broadcast("turnChanged", {
       currentTurn: this.state.currentTurn,
+      nextPlayer: nextPlayer ? nextPlayer.name : 'Unknown Player',
       turnNumber: this.state.turnNumber
     });
     
@@ -289,7 +293,7 @@ export class GeographyRoom extends Room {
     this.broadcast("gameEnded", {
       reason: reason,
       scores: finalScores,
-      message: "Game ended! Check final scores."
+      message: "Jeu terminé ! Consultez les scores finaux."
     });
   }
   

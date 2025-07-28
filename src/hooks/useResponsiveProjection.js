@@ -25,31 +25,20 @@ export const useResponsiveProjection = (selectedMode, gameConfig) => {
         const isMobileOrTablet = windowWidth < 1024;
         const baseConfig = gameConfig.projectionConfig;
         
-        // Europe mode: increase scale and adjust rotation for mobile
-        if (selectedMode === 'europe') {
-            return {
-                ...baseConfig,
-                scale: isMobileOrTablet ? 1000 : baseConfig.scale, // Zoom plus important sur mobile
-                rotate: isMobileOrTablet ? 
-                    [baseConfig.rotate[0], -50, baseConfig.rotate[2]] : 
-                    baseConfig.rotate
-            };
-        }
+        // Use responsive settings from gameConfig if available
+        const responsiveConfig = gameConfig.responsiveProjection;
         
-        // France regions mode: increase scale significantly for mobile
-        if (selectedMode === 'franceRegions') {
+        if (responsiveConfig && isMobileOrTablet) {
             return {
                 ...baseConfig,
-                scale: isMobileOrTablet ? 2400 : baseConfig.scale,
-                rotate: isMobileOrTablet ? 
-                    [baseConfig.rotate[0], -46, baseConfig.rotate[2]] : 
-                    baseConfig.rotate
+                scale: responsiveConfig.mobileScale || baseConfig.scale,
+                rotate: responsiveConfig.mobileRotate || baseConfig.rotate
             };
         }
 
         // Default: return base configuration
         return baseConfig;
-    }, [gameConfig?.projectionConfig, selectedMode, windowWidth]);
+    }, [gameConfig?.projectionConfig, gameConfig?.responsiveProjection, windowWidth]);
 
     return projectionConfig;
 }; 

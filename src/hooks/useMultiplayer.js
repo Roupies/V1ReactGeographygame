@@ -80,10 +80,232 @@ export const useMultiplayer = () => {
     // Send chat message
     const sendChatMessage = useCallback((message) => {
         if (room && message.trim()) {
-            room.send('chat', { message: message.trim() });
-            // Don't add local message - wait for server broadcast to avoid duplication
+            room.send('chat', { text: message.trim() });
         }
     }, [room]);
+    
+    // Setup room event handlers
+    const setupRoomHandlers = useCallback((room) => {
+        // Handle state changes with better error handling
+        room.onStateChange((state) => {
+            try {
+                // Only log on first connection or significant changes
+                if (!gameState.gameStarted) {
+                    console.log('✔️ Connected and state received!');
+                }
+                
+                // Process players with error handling
+                const playersObj = {};
+                try {
+                    // Method 1: forEach
+                    state.players.forEach((player, key) => {
+                        playersObj[key] = {
+                            id: key,
+                            name: player.name,
+                            score: player.score,
+                            isReady: player.isReady,
+                            isCurrentTurn: key === state.currentTurn
+                        };
+                    });
+                } catch (playerError) {
+                    console.error('Error processing players:', playerError);
+                    // Fallback: try entries method
+                    try {
+                        for (const [key, player] of state.players.entries()) {
+                            playersObj[key] = {
+                                id: key,
+                                name: player.name,
+                                score: player.score,
+                                isReady: player.isReady,
+                                isCurrentTurn: key === state.currentTurn
+                            };
+                        }
+                    } catch (entriesError) {
+                        console.error('Error with entries method:', entriesError);
+                    }
+                }
+                
+                setGameState({
+                    players: playersObj,
+                    currentTurn: state.currentTurn,
+                    gameStarted: state.gameStarted,
+                    gameEnded: state.gameEnded,
+                    turnTimeLeft: state.turnTimeLeft,
+                    turnNumber: state.turnNumber,
+                    remainingCountries: state.remainingCountries || [],
+                    guessedCountries: state.guessedCountries || [],
+                    currentCountry: state.currentCountryName ? {
+                        name: state.currentCountryName,
+                        code: state.currentCountryCode,
+                        isoCode: state.currentCountryCode
+                    } : null,
+                    gameMode: state.gameMode
+                });
+                
+            } catch (error) {
+                console.error('Error in onStateChange:', error);
+            }
+        });
+        
+        // Handle player joining
+        room.onMessage('joined', (message) => {
+            console.log('Player joined:', message);
+            setPlayerId(message.playerId);
+            addMessage(`Vous avez rejoint en tant que ${message.playerName}`, 'success');
+        });
+        
+        // Handle welcome message
+        room.onMessage('welcome', (message) => {
+            setPlayerId(room.sessionId);
+            setPlayerName(message.playerName || 'Player');
+            addMessage(message.message, 'success');
+        });
+        
+        // Handle room full
+        room.onMessage('room_full', (message) => {
+            addMessage(message.message, 'info');
+        });
+        
+        // Set player ID immediately when connected
+        setPlayerId(room.sessionId);
+        
+        // Handle game started
+        room.onMessage('game_started', (message) => {
+            addMessage('Jeu commencé !', 'success');
+            addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+        });
+        
+        // Handle gameStarted message (alternative name)
+        room.onMessage('gameStarted', (message) => {
+            addMessage('Jeu commencé !', 'success');
+            addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+        });
+        
+        // Handle newCountry message
+        room.onMessage('newCountry', (message) => {
+            // Don't reveal the country name to maintain game integrity
+        });
+        
+        // Handle turnChanged message
+        room.onMessage('turnChanged', (message) => {
+            addMessage(`Tour de ${message.nextPlayer}`, 'info');
+        });
+        
+        // Handle playerLeft message
+        room.onMessage('playerLeft', (message) => {
+            addMessage(message.message, 'warning');
+        });
+        
+        // Handle correctAnswer message
+        room.onMessage('correctAnswer', (message) => {
+            addMessage(`${message.playerName} a trouvé ${message.countryName} !`, 'success');
+        });
+        
+        // Handle wrongAnswer message
+        room.onMessage('wrongAnswer', (message) => {
+            addMessage(`${message.playerName} s'est trompé : ${message.guess}`, 'error');
+            setLastAction({ type: 'wrong', player: message.player, guess: message.guess });
+        });
+        
+        // Handle playerSkipped message
+        room.onMessage('playerSkipped', (message) => {
+            addMessage(`${message.playerName} a passé son tour`, 'info');
+        });
+        
+        // Handle gameEnded message
+        room.onMessage('gameEnded', (message) => {
+            addMessage(`Jeu terminé : ${message.reason}`, 'info');
+            // Update game state to show end modal
+            setGameState(prev => ({
+                ...prev,
+                gameEnded: true
+            }));
+        });
+        
+        // Handle gameRestarted message
+        room.onMessage('gameRestarted', (message) => {
+            addMessage('Jeu relancé !', 'success');
+        });
+        
+        // Handle chatMessage message
+        room.onMessage('chatMessage', (message) => {
+            addMessage(`${message.playerName}: ${message.message}`, 'chat');
+        });
+        
+        // Handle correct answer
+        room.onMessage('correct_answer', (message) => {
+            addMessage(`${message.player} correctly guessed ${message.country}! (+10 points)`, 'success');
+            setLastAction({ type: 'correct', player: message.player, country: message.country });
+        });
+        
+        // Handle wrong answer
+        room.onMessage('wrong_answer', (message) => {
+            addMessage(`${message.player} guessed "${message.guess}" - Wrong answer!`, 'error');
+            setLastAction({ type: 'wrong', player: message.player, guess: message.guess });
+        });
+        
+        // Handle country skipped
+        room.onMessage('country_skipped', (message) => {
+            addMessage(`${message.player} skipped ${message.country}`, 'warning');
+            setLastAction({ type: 'skip', player: message.player, country: message.country });
+        });
+        
+        // Handle turn switch
+        room.onMessage('turn_switched', (message) => {
+            const playerName = gameState.players[message.currentTurn]?.name || 'Someone';
+            addMessage(`Turn ${message.turnNumber}: ${playerName}'s turn`, 'info');
+        });
+        
+        // Handle game ended
+        room.onMessage('game_ended', (message) => {
+            addMessage(`Game ended: ${message.reason}`, 'info');
+            addMessage(`Winner: ${message.winner}!`, 'success');
+            setLastAction({ type: 'gameEnd', winner: message.winner, scores: message.scores });
+        });
+        
+        // Handle game reset
+        room.onMessage('game_reset', (message) => {
+            addMessage(message.message, 'info');
+            setLastAction(null);
+        });
+        
+        // Handle errors
+        room.onMessage('error', (message) => {
+            addMessage(message.message, 'error');
+        });
+        
+        // Handle chat messages
+        room.onMessage('chat_message', (message) => {
+            addMessage(`${message.player}: ${message.message}`, 'chat', message.player);
+        });
+        
+        // Handle room leave
+        room.onLeave((code) => {
+            console.log('Left room');
+            setIsConnected(false);
+            setRoom(null);
+            setGameState({
+                players: {},
+                currentTurn: null,
+                gameStarted: false,
+                gameEnded: false,
+                turnTimeLeft: 30,
+                turnNumber: 1,
+                remainingCountries: [],
+                guessedCountries: [],
+                currentCountry: null,
+                gameMode: 'europe'
+            });
+            setLastAction(null);
+        });
+        
+        // Handle room errors
+        room.onError((code, message) => {
+            console.error('Room error:', code, message);
+            setConnectionError(`Room error: ${message}`);
+        });
+        
+    }, [gameState.players, addMessage]);
     
     // Create or join a room
     const createRoom = useCallback(async (playerName, gameMode = 'europe') => {
@@ -189,282 +411,6 @@ export const useMultiplayer = () => {
             setIsConnecting(false);
         }
     }, [client, isConnecting, addMessage]);
-    
-    // Setup room event handlers
-    const setupRoomHandlers = useCallback((room) => {
-        // Handle state changes with better error handling
-        room.onStateChange((state) => {
-            try {
-                // Only log on first connection or significant changes
-                if (!gameState.gameStarted) {
-                    console.log('✔️ Connected and state received!');
-                }
-                
-                // Convert MapSchema to regular object for easier use in React
-                const playersObj = {};
-                
-                // More robust player extraction
-                if (state.players) {
-                    try {
-                        if (typeof state.players.forEach === 'function') {
-                            // Method 1: forEach
-                            state.players.forEach((player, key) => {
-                                // console.log('Processing player (forEach):', key, player);
-                                if (player && player.id) {
-                                    playersObj[key] = {
-                                        id: player.id,
-                                        name: player.name || '',
-                                        score: player.score || 0,
-                                        isReady: player.isReady || false,
-                                        hasAnswered: player.hasAnswered || false,
-                                        lastAnswer: player.lastAnswer || '',
-                                        correctAnswers: player.correctAnswers || 0,
-                                        totalAttempts: player.totalAttempts || 0
-                                    };
-                                }
-                            });
-                        } else if (state.players.size !== undefined) {
-                            // Method 2: Map-like object
-                            // console.log('Players size:', state.players.size);
-                            for (let [key, player] of state.players.entries()) {
-                                // console.log('Processing player (entries):', key, player);
-                                if (player && player.id) {
-                                    playersObj[key] = {
-                                        id: player.id,
-                                        name: player.name || '',
-                                        score: player.score || 0,
-                                        isReady: player.isReady || false,
-                                        hasAnswered: player.hasAnswered || false,
-                                        lastAnswer: player.lastAnswer || '',
-                                        correctAnswers: player.correctAnswers || 0,
-                                        totalAttempts: player.totalAttempts || 0
-                                    };
-                                }
-                            }
-                        } else if (typeof state.players === 'object') {
-                            // Method 3: Plain object
-                            // console.log('Players as object:', state.players);
-                            Object.keys(state.players).forEach(key => {
-                                const player = state.players[key];
-                                // console.log('Processing player (object):', key, player);
-                                if (player && player.id) {
-                                    playersObj[key] = {
-                                        id: player.id,
-                                        name: player.name || '',
-                                        score: player.score || 0,
-                                        isReady: player.isReady || false,
-                                        hasAnswered: player.hasAnswered || false,
-                                        lastAnswer: player.lastAnswer || '',
-                                        correctAnswers: player.correctAnswers || 0,
-                                        totalAttempts: player.totalAttempts || 0
-                                    };
-                                }
-                            });
-                        }
-                    } catch (playerError) {
-                        console.error('Error processing players:', playerError);
-                    }
-                }
-                // console.log('Final playersObj:', playersObj);
-                
-                // Safe array handling
-                const safeRemainingCountries = (() => {
-                    try {
-                        if (Array.isArray(state.remainingCountries)) {
-                            return [...state.remainingCountries];
-                        } else if (state.remainingCountries && typeof state.remainingCountries.forEach === 'function') {
-                            const arr = [];
-                            state.remainingCountries.forEach(item => arr.push(item));
-                            return arr;
-                        }
-                        return [];
-                    } catch (e) {
-                        console.error('Error processing remainingCountries:', e);
-                        return [];
-                    }
-                })();
-                
-                const safeGuessedCountries = (() => {
-                    try {
-                        if (Array.isArray(state.guessedCountries)) {
-                            return [...state.guessedCountries];
-                        } else if (state.guessedCountries && typeof state.guessedCountries.forEach === 'function') {
-                            const arr = [];
-                            state.guessedCountries.forEach(item => arr.push(item));
-                            return arr;
-                        }
-                        return [];
-                    } catch (e) {
-                        console.error('Error processing guessedCountries:', e);
-                        return [];
-                    }
-                })();
-                
-                setGameState({
-                    players: playersObj,
-                    gameStarted: state.gameStarted || false,
-                    gameEnded: state.gameEnded || false,
-                    currentTurn: state.currentTurn || '',
-                    currentCountry: state.currentCountryName ? {
-                        name: state.currentCountryName,
-                        isoCode: state.currentCountryCode || '',
-                        altNames: []
-                    } : null,
-                    remainingCountries: safeRemainingCountries,
-                    guessedCountries: safeGuessedCountries,
-                    turnTimeLeft: state.turnTimeLeft || 30,
-                    gameMode: state.gameMode || 'europe',
-                    totalCountries: state.totalCountries || 0,
-                    turnNumber: state.turnNumber || 1,
-                    maxTurns: state.maxTurns || 20
-                });
-            } catch (error) {
-                console.error('Error in onStateChange:', error);
-            }
-        });
-        
-        // Handle player joining
-        room.onMessage('joined', (message) => {
-            console.log('Player joined:', message);
-            setPlayerId(message.playerId);
-            addMessage(`You joined as ${message.playerName}`, 'success');
-        });
-        
-        // Handle welcome message
-        room.onMessage('welcome', (message) => {
-            setPlayerId(room.sessionId);
-            setPlayerName(message.playerName || 'Player');
-            addMessage(message.message, 'success');
-        });
-        
-        // Handle room full
-        room.onMessage('room_full', (message) => {
-            addMessage(message.message, 'info');
-        });
-        
-        // Set player ID immediately when connected
-        setPlayerId(room.sessionId);
-        
-        // Handle game started
-        room.onMessage('game_started', (message) => {
-            addMessage('Game started!', 'success');
-            addMessage(`${gameState.players[message.currentTurn]?.name || 'Someone'}'s turn`, 'info');
-        });
-        
-        // Handle gameStarted message (alternative name)
-        room.onMessage('gameStarted', (message) => {
-            addMessage('Game started!', 'success');
-            addMessage(`${gameState.players[message.firstTurn]?.name || 'Someone'}'s turn`, 'info');
-        });
-        
-        // Handle newCountry message
-        room.onMessage('newCountry', (message) => {
-            addMessage(`New country: ${message.countryName}`, 'info');
-        });
-        
-        // Handle turnChanged message
-        room.onMessage('turnChanged', (message) => {
-            addMessage(`Turn changed to ${message.nextPlayer}`, 'info');
-        });
-        
-        // Handle playerLeft message
-        room.onMessage('playerLeft', (message) => {
-            addMessage(message.message, 'warning');
-        });
-        
-        // Handle correctAnswer message
-        room.onMessage('correctAnswer', (message) => {
-            addMessage(`${message.playerName} correctly guessed ${message.countryName}!`, 'success');
-        });
-        
-        // Handle wrongAnswer message
-        room.onMessage('wrongAnswer', (message) => {
-            addMessage(`${message.playerName} guessed wrong: ${message.guess}`, 'error');
-        });
-        
-        // Handle playerSkipped message
-        room.onMessage('playerSkipped', (message) => {
-            addMessage(`${message.playerName} skipped their turn`, 'info');
-        });
-        
-        // Handle gameEnded message
-        room.onMessage('gameEnded', (message) => {
-            addMessage(`Game ended: ${message.reason}`, 'info');
-        });
-        
-        // Handle gameRestarted message
-        room.onMessage('gameRestarted', (message) => {
-            addMessage('Game restarted!', 'success');
-        });
-        
-        // Handle chatMessage message
-        room.onMessage('chatMessage', (message) => {
-            addMessage(`${message.playerName}: ${message.message}`, 'chat');
-        });
-        
-        // Handle correct answer
-        room.onMessage('correct_answer', (message) => {
-            addMessage(`${message.player} correctly guessed ${message.country}! (+10 points)`, 'success');
-            setLastAction({ type: 'correct', player: message.player, country: message.country });
-        });
-        
-        // Handle wrong answer
-        room.onMessage('wrong_answer', (message) => {
-            addMessage(`${message.player} guessed "${message.guess}" - Wrong answer!`, 'error');
-            setLastAction({ type: 'wrong', player: message.player, guess: message.guess });
-        });
-        
-        // Handle country skipped
-        room.onMessage('country_skipped', (message) => {
-            addMessage(`${message.player} skipped ${message.country}`, 'warning');
-            setLastAction({ type: 'skip', player: message.player, country: message.country });
-        });
-        
-        // Handle turn switch
-        room.onMessage('turn_switched', (message) => {
-            const playerName = gameState.players[message.currentTurn]?.name || 'Someone';
-            addMessage(`Turn ${message.turnNumber}: ${playerName}'s turn`, 'info');
-        });
-        
-        // Handle game ended
-        room.onMessage('game_ended', (message) => {
-            addMessage(`Game ended: ${message.reason}`, 'info');
-            addMessage(`Winner: ${message.winner}!`, 'success');
-            setLastAction({ type: 'gameEnd', winner: message.winner, scores: message.scores });
-        });
-        
-        // Handle game reset
-        room.onMessage('game_reset', (message) => {
-            addMessage(message.message, 'info');
-            setLastAction(null);
-        });
-        
-        // Handle errors
-        room.onMessage('error', (message) => {
-            addMessage(message.message, 'error');
-        });
-        
-        // Handle chat messages
-        room.onMessage('chat_message', (message) => {
-            addMessage(`${message.player}: ${message.message}`, 'chat', message.player);
-        });
-        
-        // Handle connection loss
-        room.onLeave(() => {
-            console.log('Left room');
-            if (!cleanupRef.current) {
-                addMessage('Disconnected from room', 'error');
-                setIsConnected(false);
-                setRoom(null);
-            }
-        });
-        
-        room.onError((code, message) => {
-            console.error('Room error:', code, message);
-            addMessage(`Room error: ${message}`, 'error');
-        });
-        
-    }, [addMessage, gameState.players]);
     
     // Game actions
     const readyUp = useCallback(() => {

@@ -32,10 +32,10 @@ const ScoreStars = ({ guessedCountries, gameConfig }) => {
     
     if (!gameConfig) return null;
     if (!gameConfig.entities) return null;
-    
+
     const totalCountries = gameConfig.entities.length;
     if (totalCountries === 0) return null;
-    
+
     const guessedCount = guessedCountries.length;
     const oneThird = Math.ceil(totalCountries / 3);
     const twoThirds = Math.ceil((totalCountries * 2) / 3);
@@ -60,7 +60,7 @@ const ScoreStars = ({ guessedCountries, gameConfig }) => {
         }
         return 0;
     };
-    
+
     return (
         <div style={{
             position: 'absolute',

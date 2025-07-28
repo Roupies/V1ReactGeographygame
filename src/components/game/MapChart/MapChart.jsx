@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 // Importez uniquement ComposableMap, Geographies, Geography, Marker
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"; 
-import { EUROPEAN_COUNTRIES } from '../../../data/countries';
+import { EUROPEAN_COUNTRIES } from '../../../../shared/data/entities.js';
 
 // European subregions for potential future filtering
 const EUROPEAN_SUBREGIONS = [
@@ -105,7 +105,7 @@ const MapChart = ({
         const geoId = String(geo.properties[geoIdProperty]);
         
         // Check if this entity has been successfully guessed
-        const isGuessed = guessedCountries.some(c => 
+        const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => 
             String(c.code) === geoId || String(c.isoCode) === geoId
         );
         
@@ -311,7 +311,7 @@ const MapChart = ({
     // Memoize marker style function
     const getMarkerStyle = useMemo(() => (entityId) => {
         // Check game state for this specific entity
-        const isGuessed = guessedCountries.some(c => 
+        const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => 
             String(c.code || c.isoCode) === entityId
         );
         const isCurrent = currentCountry && 
@@ -407,7 +407,7 @@ const MapChart = ({
                         // Check game state for this micro-state
                         const isCurrent = currentCountry && 
                             String(currentCountry.code || currentCountry.isoCode) === entityId;
-                        const isGuessed = guessedCountries.some(c => 
+                        const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => 
                             String(c.code || c.isoCode) === entityId
                         );
                         

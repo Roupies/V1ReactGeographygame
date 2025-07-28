@@ -1,6 +1,6 @@
 // Multiplayer-specific UI components
 // Handles turn indicators, player scores, waiting room, and game messages
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Waiting room component - shows while waiting for players to ready up
 export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId }) {
@@ -253,6 +253,14 @@ export function PlayerScores({ gameState, currentPlayer }) {
 export function GameMessages({ messages, style = {}, onSendMessage, currentPlayer }) {
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const messagesEndRef = useRef(null);
+  
+  // Auto-scroll vers le bas quand de nouveaux messages arrivent
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
   
   // Messages pré-enregistrés
   const predefinedMessages = [
@@ -432,6 +440,7 @@ export function GameMessages({ messages, style = {}, onSendMessage, currentPlaye
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );
@@ -487,10 +496,13 @@ function getMessageColor(type) {
 
 // Game end modal for multiplayer
 export function MultiplayerEndModal({ lastAction, gameState, onRestart, onLeave }) {
-  if (!lastAction || lastAction.type !== 'gameEnd') return null;
+  if (!gameState.gameEnded) return null;
 
   const players = Object.values(gameState.players);
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  
+  // Déterminer le vainqueur (le joueur avec le plus de points)
+  const winner = sortedPlayers.length > 0 ? sortedPlayers[0] : null;
 
   return (
     <div style={{
@@ -519,7 +531,7 @@ export function MultiplayerEndModal({ lastAction, gameState, onRestart, onLeave 
         
         <div style={{ marginBottom: '30px' }}>
           <h3 style={{ color: '#28a745', marginBottom: '15px' }}>
-            🏆 Vainqueur : {lastAction.winner}
+            🏆 Vainqueur : {winner ? winner.name : 'Aucun vainqueur'}
           </h3>
           
           <div style={{ textAlign: 'left' }}>

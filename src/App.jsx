@@ -54,10 +54,16 @@ function App() {
         
         // In multiplayer, use the mode from server state if available
         if (isMultiplayer && multiplayer.gameState.gameMode) {
-            return gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
+            console.log('Getting multiplayer config for mode:', multiplayer.gameState.gameMode);
+            const config = gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
+            console.log('Multiplayer config:', config);
+            return config;
         }
         
-        return gameManager.getMode(selectedMode, isMultiplayer);
+        console.log('Getting solo config for mode:', selectedMode, 'isMultiplayer:', isMultiplayer);
+        const config = gameManager.getMode(selectedMode, isMultiplayer);
+        console.log('Solo config:', config);
+        return config;
     }, [selectedMode, isMultiplayer, multiplayer.gameState.gameMode]);
 
     // Use modular game logic hook with GameManager
@@ -131,8 +137,20 @@ function App() {
         setShowLobby(false);
         setIsMultiplayer(false);
         setSelectedMode(null);
-        setShowModeSelection(true); // Go back to mode selection
     }, []);
+    
+    // Function to go back to multiplayer mode selection from end game modal
+    const handleBackToMultiplayerMode = useCallback(() => {
+        setSelectedMode(null);
+        setIsMultiplayer(false);
+        setShowLobby(false);
+        setShowModeSelection(false);
+        setGameType('multiplayer');
+        setShowModeSelection(true);
+        if (multiplayer.isConnected) {
+            multiplayer.leaveRoom();
+        }
+    }, [multiplayer]);
     
     const handleCreateRoom = useCallback(async (playerName, gameMode) => {
         await multiplayer.createRoom(playerName, gameMode);
@@ -285,9 +303,9 @@ function App() {
 
 
             
-            {!isMultiplayer && selectedMode && gameConfig && (
+            {selectedMode && gameConfig && (
                 <ScoreStars 
-                    guessedCountries={gameLogic.guessedEntities}
+                    guessedCountries={isMultiplayer ? (Array.isArray(multiplayer.gameState.guessedCountries) ? multiplayer.gameState.guessedCountries : []) : gameLogic.guessedEntities}
                     gameConfig={gameConfig}
                     theme={theme}
                 />
@@ -299,10 +317,13 @@ function App() {
             {/* Game controls */}
             <GameControls
                 // Game state
-                gameEnded={gameLogic.gameEnded}
+                gameEnded={isMultiplayer ? multiplayer.gameState.gameEnded : gameLogic.gameEnded}
                 currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentEntity}
-                guessedCount={isMultiplayer ? multiplayer.gameState.guessedCountries?.length : gameLogic.guessedEntities.length}
-                totalCount={isMultiplayer ? gameManager.getEntities('europe', true).length : gameLogic.totalEntities}
+                guessedCount={isMultiplayer ? (Array.isArray(multiplayer.gameState.guessedCountries) ? multiplayer.gameState.guessedCountries.length : 0) : gameLogic.guessedEntities.length}
+                totalCount={isMultiplayer ? 
+                    (gameConfig?.entities?.length || 0) : 
+                    gameLogic.totalEntities
+                }
                 
                 // Input handling
                 guessInput={isMultiplayer ? (multiplayer.isMyTurn ? gameLogic.guessInput : '') : gameLogic.guessInput}
@@ -404,7 +425,7 @@ function App() {
                 <MultiplayerEndModal
                     lastAction={multiplayer.lastAction}
                     gameState={multiplayer.gameState}
-                    onRestart={multiplayer.restartGame}
+                    onRestart={handleBackToMultiplayerMode}
                     onLeave={goToHome}
                 />
             )}
