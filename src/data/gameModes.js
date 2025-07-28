@@ -1,97 +1,134 @@
-// Game modes configuration - defines different geography quiz modes
+// Game modes configuration - refactored to use GameManager
 // This modular approach allows easy addition of new game modes without code changes
 import { EUROPEAN_COUNTRIES } from './countries';
 import { FRENCH_REGIONS, FRENCH_REGIONS_WITH_NAMES } from './regions';
+import gameManager from '../services/GameManager';
 
-// Main game modes configuration object
-// Each mode defines its own entities, visualization, and validation rules
-export const GAME_MODES = {
-  // European Countries Mode - quiz on European countries using world map
+// Mode configurations for GameManager
+// These define the data and rules for each game mode
+const MODE_CONFIGS = {
+  // European Countries Mode
   europe: {
-    label: "Pays d'Europe",                    // Display name for mode selection
-    entities: EUROPEAN_COUNTRIES,             // Array of countries to guess
-    geoJson: '/geojson/europe.json',          // Path to geographic data file
-    getName: entity => entity.name,           // Function to extract entity name
-    getAltNames: entity => entity.altNames || [], // Function to get alternative names
-    unitLabel: 'pays',                        // Label for entities (used in UI messages)
-    geoIdProperty: 'ISO_A3',                  // Property name for matching entities to map
+    label: "Pays d'Europe",
+    entities: EUROPEAN_COUNTRIES,
+    geoJsonFile: 'europe.json',
+    geoIdProperty: 'ISO_A3',
+    unitLabel: 'pays',
     projectionConfig: { 
-      rotate: [-8, -50, 0],                   // Map rotation [longitude, latitude, roll] - focus plus au sud
-      scale: 550                              // Map zoom level - légèrement dézoomé pour voir plus d'Europe
+      rotate: [-8, -50, 0],
+      scale: 550
     },
-  },
-  
-  // French Regions Mode - quiz on French metropolitan regions only
-  franceRegions: {
-    label: "Régions de France métropolitaine", // Display name for mode selection
-    entities: FRENCH_REGIONS,                 // Array of regions to guess
-    geoJson: '/geojson/france-metropole.geojson', // Path to metropolitan regions only
-    getName: entity => entity.name,           // Function to extract region name
-    getAltNames: entity => entity.altNames || [], // Function to get alternative names
-    unitLabel: 'régions',                     // Label for entities (used in UI messages)
-    geoIdProperty: 'code',                    // Property name for matching regions to map
-    projectionConfig: { 
-      rotate: [-2, -43, 0],                   // Map rotation focused on France
-      scale: 1800                             // High zoom level for detailed view
+    victoryCondition: 'all_entities',
+    feedbackMessages: {
+      victory: 'Félicitations ! Vous avez trouvé tous les pays d\'Europe !',
+      hint: 'Ce pays commence par la lettre',
+      correctAnswer: 'Correct ! C\'était bien'
     },
+    showHint: true,
+    showSkip: true,
+    scoreType: 'stars',
+    timerType: 'countdown'
   },
 
-  // French Complete Mode - quiz on all French regions with dual map display
+  // French Complete Mode - Dual map with DOM-TOM and Metropole
   franceComplete: {
-    label: "Toutes les régions françaises",   // Display name for mode selection
-    entities: FRENCH_REGIONS,                 // Array of all French regions to guess
-    unitLabel: 'régions',                     // Label for entities (used in UI messages)
-    getName: entity => entity.name,           // Function to extract region name
-    getAltNames: entity => entity.altNames || [], // Function to get alternative names
-    geoIdProperty: 'code',                    // Property name for matching regions to map
-    
-    // Multi-zone configuration for dual map display
+    label: "Toutes les régions françaises",
+    entities: FRENCH_REGIONS,
+    unitLabel: 'région',
+    geoIdProperty: 'code',
+    victoryCondition: 'all_entities',
+    feedbackMessages: {
+      victory: 'Félicitations ! Vous avez trouvé toutes les régions françaises !',
+      hint: 'Cette région commence par la lettre',
+      correctAnswer: 'Correct ! C\'était bien'
+    },
+    showHint: true,
+    showSkip: true,
+    scoreType: 'stars',
+    timerType: 'countdown',
     zones: [
       {
         name: "DOM-TOM", 
-        geoJson: '/geojson/domtom.geojson',
+        geoJsonFile: 'domtom.geojson',
         projectionConfig: { 
-          rotate: [61, 5, 0],                 // Modifié: latitude positive pour remonter
-          scale: 850                          // Dézoomé pour voir tous les DOM-TOM
+          rotate: [61, 5, 0],
+          scale: 850
         },
-        // Codes des DOM-TOM
-        regionCodes: ['01', '02', '03', '04', '06']
+        regionCodes: ['01', '02', '03', '04', '06'] // Guadeloupe, Martinique, Guyane, La Réunion, Mayotte
       },
       {
         name: "Métropole",
-        geoJson: '/geojson/france-metropole.geojson',
+        geoJsonFile: 'france-metropole.geojson',
         projectionConfig: { 
-          rotate: [-2, -46.5, 0],               // Ajusté pour mieux centrer la France
-          scale: 1800                           // Corrigé et augmenté pour un meilleur zoom
+          rotate: [-2, -46.5, 0],
+          scale: 1800
         },
-        // Codes des régions métropolitaines (pour filtrer l'affichage)
-        regionCodes: ['11', '24', '27', '28', '32', '44', '52', '53', '75', '76', '84', '93', '94']
+        regionCodes: ['11', '24', '27', '28', '32', '44', '52', '53', '75', '76', '84', '93', '94'] // Toutes les régions métropolitaines
       }
     ],
-    
-    // Layout configuration for dual display
     layout: {
-      type: 'dual',                           // Type d'affichage
-      orientation: 'horizontal',              // DOM-TOM à gauche, métropole à droite
-      domtomPosition: 'left'                  // Position des DOM-TOM
+      type: 'dual',
+      orientation: 'horizontal',
+      domtomPosition: 'left'
+    }
+  }
+};
+
+// Multiplayer mode configurations
+const MULTIPLAYER_MODE_CONFIGS = {
+  europe: {
+    ...MODE_CONFIGS.europe,
+    label: "Pays d'Europe (Multijoueur)",
+    scoreType: 'points',
+    victoryCondition: 'score_threshold',
+    scoreThreshold: 50,
+    feedbackMessages: {
+      ...MODE_CONFIGS.europe.feedbackMessages,
+      victory: 'Partie terminée ! Regardez les scores finaux.',
+      playerFound: 'a trouvé',
+      playerSkipped: 'a passé'
+    },
+    // UI Customization for multiplayer
+    primaryColor: '#28a745',
+    secondaryColor: '#32c252',
+    icon: '🌍',
+    uiCustomization: {
+      buttonGradient: 'linear-gradient(45deg, #28a745, #32c252)',
+      hoverEffect: 'glow',
+      theme: 'multiplayer-europe'
     }
   },
-
-  // French All Regions Mode - quiz on all French regions (metropole + outre-mer) on single map
-  franceRegionsAll: {
-    label: "Toutes les régions (carte unique)",  // Display name for mode selection
-    entities: FRENCH_REGIONS_WITH_NAMES,         // Array adapted for France et Outre-mers.json
-    geoJson: '/geojson/France et Outre-mers.json', // Path to France + DOM-TOM file
-    getName: entity => entity.name,              // Function to extract region name
-    getAltNames: entity => entity.altNames || [], // Function to get alternative names
-    unitLabel: 'régions',                        // Label for entities (used in UI messages)
-    geoIdProperty: 'Région',                     // Property name for matching regions to map (use region name)
-    projectionConfig: { 
-      rotate: [-2, -43, 0],                      // Map rotation focused on France
-      scale: 800                                 // Zoom level for world view with all territories
-    },
-  },
   
-  // Future modes can be easily added here with the same structure
-  // Example: departments, world capitals, US states, etc.
-}; 
+  franceComplete: {
+    ...MODE_CONFIGS.franceComplete,
+    label: "Toutes les régions françaises (Multijoueur)",
+    scoreType: 'points',
+    victoryCondition: 'score_threshold',
+    scoreThreshold: 40,
+    feedbackMessages: {
+      ...MODE_CONFIGS.franceComplete.feedbackMessages,
+      victory: 'Partie terminée ! Regardez les scores finaux.',
+      playerFound: 'a trouvé',
+      playerSkipped: 'a passé'
+    },
+    // UI Customization for multiplayer
+    primaryColor: '#6f42c1',
+    secondaryColor: '#5a32a3',
+    icon: '🗺️',
+    uiCustomization: {
+      buttonGradient: 'linear-gradient(45deg, #6f42c1, #5a32a3)',
+      hoverEffect: 'glow',
+      theme: 'multiplayer-france-complete'
+    }
+  }
+};
+
+// Initialisation GameManager
+gameManager.soloModes = MODE_CONFIGS;
+gameManager.multiplayerModes = MULTIPLAYER_MODE_CONFIGS;
+
+// Export legacy GAME_MODES pour compatibilité éventuelle
+export const GAME_MODES = MODE_CONFIGS;
+
+// Export GameManager instance
+export default gameManager; 

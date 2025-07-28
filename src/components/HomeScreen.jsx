@@ -1,9 +1,8 @@
 // Home screen component for game mode selection
 // Provides an attractive landing page with responsive design and mode selection buttons
 import React from 'react';
-import { GAME_MODES } from '../data/gameModes';
 
-// Main home screen component - renders mode selection interface
+// Main home screen component - simplified to just Solo vs Multiplayer choice
 export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
   return (
     <div style={{
@@ -24,118 +23,119 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
         textAlign: 'center',
         padding: '0 20px'                 // Horizontal padding for mobile
       }}>
-        Choisissez un mode de jeu
+        Mini jeu Géographie
       </h1>
       
-      {/* Game mode type selection */}
+      {/* Subtitle */}
+      <p style={{
+        color: '#ccc',
+        fontSize: '1.2em',
+        textAlign: 'center',
+        marginBottom: '60px',
+        maxWidth: '600px'
+      }}>
+        Testez vos connaissances géographiques !
+      </p>
+      
+      {/* Game mode selection buttons */}
       <div style={{
         display: 'flex',
-        gap: '20px',
-        marginBottom: '30px',
+        gap: '30px',
         flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
       }}>
-        <h2 style={{ 
-          color: '#ffffff', 
-          fontSize: '1.5em',
-          textAlign: 'center',
-          margin: 0
-        }}>
-          Solo
-        </h2>
-        <h2 style={{ 
-          color: '#28a745', 
-          fontSize: '1.5em',
-          textAlign: 'center',
-          margin: 0
-        }}>
-          Multijoueur
-        </h2>
-      </div>
-      
-      {/* Mode selection buttons container with responsive layout */}
-      <div style={{ 
-        display: 'flex', 
-        gap: window.innerWidth <= 768 ? '16px' : '32px',     // Smaller gap on mobile
-        flexDirection: window.innerWidth <= 480 ? 'column' : 'row', // Stack vertically on phones
-        width: '100%',
-        maxWidth: window.innerWidth <= 480 ? '300px' : '800px',     // Constrain width
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        {/* Dynamic button generation from game modes configuration */}
-        {Object.entries(GAME_MODES).map(([key, config]) => (
-          <button
-            key={key}
-            onClick={() => onSelectMode(key)}           // Call parent function with mode key
-            style={{
-              // Responsive padding based on screen size
-              padding: window.innerWidth <= 480 ? '20px 30px' : 
-                      window.innerWidth <= 768 ? '25px 35px' : '30px 40px',
-              // Responsive font size
-              fontSize: window.innerWidth <= 480 ? '1.2em' : 
-                       window.innerWidth <= 768 ? '1.3em' : '1.5em',
-              borderRadius: '25px',               // Rounded corners
-              border: 'none',
-              background: '#007bff',              // Bootstrap primary blue
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.2)', // Subtle shadow
-              transition: 'background 0.2s, transform 0.1s', // Smooth animations
-              // Responsive width: full width on mobile, auto on larger screens
-              width: window.innerWidth <= 480 ? '100%' : 'auto',
-              minWidth: window.innerWidth <= 768 ? '200px' : '250px',
-              textAlign: 'center'
-            }}
-            // Hover effects for better user interaction feedback
-            onMouseOver={(e) => {
-              e.target.style.background = '#0056b3';     // Darker blue on hover
-              e.target.style.transform = 'translateY(-2px)'; // Slight lift effect
-            }}
-            onMouseOut={(e) => {
-              e.target.style.background = '#007bff';     // Return to original color
-              e.target.style.transform = 'translateY(0)'; // Return to original position
-            }}
-          >
-            {config.label}                        {/* Display mode name from configuration */}
-          </button>
-        ))}
-      </div>
-      
-      {/* Multiplayer section */}
-      <div style={{
-        marginTop: '40px',
-        display: 'flex',
-        justifyContent: 'center'
-      }}>
+        {/* Solo Mode Button */}
         <button
-          onClick={onSelectMultiplayer}
+          onClick={() => onSelectMode('solo')}
           style={{
-            padding: window.innerWidth <= 480 ? '20px 40px' : '25px 50px',
-            fontSize: window.innerWidth <= 480 ? '1.3em' : '1.6em',
-            borderRadius: '25px',
+            padding: '20px 40px',
+            fontSize: '1.3em',
             border: 'none',
-            background: '#28a745',              // Green for multiplayer
+            borderRadius: '12px',
+            backgroundColor: '#4169E1',
+            background: 'linear-gradient(45deg, #4169E1, #5a7bff)',
             color: 'white',
-            fontWeight: 'bold',
             cursor: 'pointer',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-            transition: 'background 0.2s, transform 0.1s',
-            width: window.innerWidth <= 480 ? '100%' : 'auto',
-            maxWidth: '300px'
+            transition: 'all 0.3s ease',
+            minHeight: '80px',
+            minWidth: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 4px 15px rgba(65, 105, 225, 0.3)'
           }}
           onMouseOver={(e) => {
-            e.target.style.background = '#1e7e34';     // Darker green on hover
-            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.transform = 'translateY(-3px)';
+            e.target.style.boxShadow = '0 8px 25px rgba(65, 105, 225, 0.5)';
+            e.target.style.filter = 'brightness(1.1)';
           }}
           onMouseOut={(e) => {
-            e.target.style.background = '#28a745';     // Return to original green
             e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 15px rgba(65, 105, 225, 0.3)';
+            e.target.style.filter = 'brightness(1)';
           }}
         >
-          🎮 Multijoueur (2 joueurs)
+          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
+            🎯
+          </span>
+          Mode Solo
+        </button>
+
+        {/* Multiplayer Mode Button */}
+        <button
+          onClick={() => onSelectMultiplayer('multiplayer')}
+          style={{
+            padding: '20px 40px',
+            fontSize: '1.3em',
+            border: 'none',
+            borderRadius: '12px',
+            backgroundColor: '#28a745',
+            background: 'linear-gradient(45deg, #28a745, #32c252)',
+            color: 'white',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            minHeight: '80px',
+            minWidth: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = 'translateY(-3px)';
+            e.target.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.5)';
+            e.target.style.filter = 'brightness(1.1)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
+            e.target.style.filter = 'brightness(1)';
+          }}
+        >
+          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
+            🎮
+          </span>
+          Mode Multijoueur
         </button>
       </div>
+
+      {/* Footer note */}
+      <p style={{
+        color: '#aaa',
+        marginTop: '60px',
+        textAlign: 'center',
+        fontSize: '1em',
+        maxWidth: '600px',
+        lineHeight: '1.6'
+      }}>
+        <strong>Mode Solo :</strong> Jouez seul et améliorez vos connaissances<br/>
+        <strong>Mode Multijoueur :</strong> Jouez à 2 avec tours alternés en temps réel !
+      </p>
     </div>
   );
 } 

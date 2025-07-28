@@ -64,5 +64,21 @@ export const useTimer = (initialTime, gameEnded) => {
         setTimeLeft(value);
     }, []);
 
-    return { timeLeft, setTimeLeft: setTimeLeftStable, formatTime };
+    // Reset timer to initial time
+    const resetTimer = useCallback(() => {
+        setTimeLeft(initialTime);
+        // Clear any existing timer
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, [initialTime]);
+
+    return { 
+        timeLeft, 
+        setTimeLeft: setTimeLeftStable, 
+        formatTime, 
+        resetTimer,
+        gameTimeSeconds: initialTime
+    };
 };

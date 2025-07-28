@@ -1,6 +1,7 @@
 // Modular App component - ORCHESTRATION ONLY
 // Follows Single Responsibility Principle - only handles orchestration
 // Delegates all specialized concerns to focused components and hooks
+// Now uses GameManager for all game mode logic
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import MapChart from './components/game/MapChart/MapChart';
@@ -10,10 +11,10 @@ import { useFocusManagement } from './hooks/useFocusManagement';
 import { useResponsiveProjection } from './hooks/useResponsiveProjection';
 import { useTheme } from './hooks/useTheme';
 import { useMultiplayer } from './hooks/useMultiplayer';
-import { GAME_MODES } from './data/gameModes';
+import gameManager from './data/gameModes';
 import HomeScreen from './components/HomeScreen';
+import ModeSelectionScreen from './components/ModeSelectionScreen';
 import LobbyScreen from './components/LobbyScreen';
-import GameHeader from './components/game/GameHeader';
 import GameControls from './components/game/GameControls';
 import EndGameModal from './components/game/EndGameModal';
 import ScoreStars from './components/game/ScoreStars';
@@ -29,70 +30,64 @@ import {
 } from './components/game/MultiplayerUI';
 import './App.css';
 
-// Clean, modular App component
+// Clean, modular App component using GameManager
 function App() {
     // State management for game mode selection
     const [selectedMode, setSelectedMode] = useState(null);
     const [isMultiplayer, setIsMultiplayer] = useState(false);
     const [showLobby, setShowLobby] = useState(false);
+    const [showModeSelection, setShowModeSelection] = useState(false);
+    const [gameType, setGameType] = useState(null); // 'solo' or 'multiplayer'
     
     // State for hint popup visibility
     const [showHintPopup, setShowHintPopup] = useState(false);
     
     // Theme management
-    const { theme } = useTheme();
+    const { theme } = useTheme(selectedMode);
     
     // Multiplayer hook
     const multiplayer = useMultiplayer();
     
-    // Memoize gameConfig to prevent unnecessary re-renders
+    // Get game configuration from GameManager
     const gameConfig = useMemo(() => {
-        console.log('gameConfig calculation - selectedMode:', selectedMode, 'isMultiplayer:', isMultiplayer);
-        console.log('GAME_MODES available:', Object.keys(GAME_MODES));
-        const config = selectedMode ? GAME_MODES[selectedMode] : null;
-        console.log('gameConfig result:', config ? 'defined' : 'null');
-        return config;
-    }, [selectedMode, isMultiplayer]);
+        if (!selectedMode) return null;
+        
+        // In multiplayer, use the mode from server state if available
+        if (isMultiplayer && multiplayer.gameState.gameMode) {
+            return gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
+        }
+        
+        return gameManager.getMode(selectedMode, isMultiplayer);
+    }, [selectedMode, isMultiplayer, multiplayer.gameState.gameMode]);
 
-    // Stabilize getName and getAltNames functions to prevent re-renders
-    const getName = useMemo(() => {
-        return gameConfig?.getName || ((entity) => entity.name);
-    }, [gameConfig?.getName]);
-
-    const getAltNames = useMemo(() => {
-        return gameConfig?.getAltNames || ((entity) => entity.altNames || []);
-    }, [gameConfig?.getAltNames]);
-
-    // Use modular game logic hook with stable functions
-    const gameLogic = useGameLogic(
-        gameConfig?.entities,
-        getName,
-        getAltNames
-    );
+    // Use modular game logic hook with GameManager
+    const gameLogic = useGameLogic(selectedMode, isMultiplayer);
 
     // Use specialized focus management hook
     const focusManagement = useFocusManagement(selectedMode, gameLogic.gameEnded);
 
-    // Use responsive projection hook
+    // Use responsive projection hook with GameManager data
     const projectionConfig = useResponsiveProjection(selectedMode, gameConfig);
 
-    // Initialize game when mode changes - simple version
-    useEffect(() => {
-        if (selectedMode) {
-            gameLogic.initializeGame();
-        }
-    }, [selectedMode]); // Only depend on selectedMode
-    
-    // Close hint popup when current country changes
+    // Close hint popup when current entity changes
     useEffect(() => {
         setShowHintPopup(false);
-    }, [gameLogic.currentCountry]);
+    }, [gameLogic.currentEntity]);
 
+    // Update selected mode when receiving game mode from server in multiplayer
+    useEffect(() => {
+        if (isMultiplayer && multiplayer.gameState.gameMode && !selectedMode) {
+            setSelectedMode(multiplayer.gameState.gameMode);
+        }
+    }, [isMultiplayer, multiplayer.gameState.gameMode, selectedMode]);
+    
     // Stable goToHome function
     const goToHome = useCallback(() => {
         setSelectedMode(null);
         setIsMultiplayer(false);
         setShowLobby(false);
+        setShowModeSelection(false);
+        setGameType(null);
         if (multiplayer.isConnected) {
             multiplayer.leaveRoom();
         }
@@ -105,28 +100,51 @@ function App() {
     // Function to close hint popup
     const closeHintPopup = useCallback(() => setShowHintPopup(false), []);
     
-    // Multiplayer navigation functions
-    const handleSelectMultiplayer = useCallback(() => {
-        setIsMultiplayer(true);
-        setShowLobby(true);
-        // Set Europe mode immediately for multiplayer
-        setSelectedMode('europe');
+    // Navigation functions for new flow
+    const handleSelectSolo = useCallback(() => {
+        setGameType('solo');
+        setShowModeSelection(true);
     }, []);
     
+    const handleSelectMultiplayer = useCallback(() => {
+        setGameType('multiplayer');
+        setShowModeSelection(true);
+    }, []);
+    
+    const handleBackFromModeSelection = useCallback(() => {
+        setShowModeSelection(false);
+        setGameType(null);
+    }, []);
+    
+    const handleSelectMode = useCallback((modeKey) => {
+        setSelectedMode(modeKey);
+        setShowModeSelection(false);
+        
+        if (gameType === 'multiplayer') {
+            setIsMultiplayer(true);
+            setShowLobby(true);
+        }
+    }, [gameType]);
+    
+    // Multiplayer navigation functions
     const handleBackFromLobby = useCallback(() => {
         setShowLobby(false);
         setIsMultiplayer(false);
+        setSelectedMode(null);
+        setShowModeSelection(true); // Go back to mode selection
     }, []);
     
-    const handleCreateRoom = useCallback(async (playerName) => {
-        await multiplayer.createRoom(playerName, 'europe');
+    const handleCreateRoom = useCallback(async (playerName, gameMode) => {
+        await multiplayer.createRoom(playerName, gameMode);
+        setSelectedMode(gameMode); // Set the selected mode
     }, [multiplayer]);
     
     const handleJoinRoom = useCallback(async (roomId, playerName) => {
         await multiplayer.joinRoom(roomId, playerName);
+        // Mode will be set when we receive game state from server
     }, [multiplayer]);
 
-    // Memorize enhanced actions to prevent unnecessary re-renders
+    // Enhanced actions using GameManager
     const enhancedActions = useMemo(() => ({
         handleGuess: () => {
             gameLogic.handleGuess();
@@ -138,43 +156,42 @@ function App() {
         },
         handleHint: () => {
             gameLogic.handleHint();
-            setShowHintPopup(true); // Show the hint popup
+            setShowHintPopup(true);
             focusManagement.focusInput();
         },
         handleKeyPress: gameLogic.handleKeyPress
     }), [gameLogic.handleGuess, gameLogic.handleSkip, gameLogic.handleHint, gameLogic.handleKeyPress, focusManagement.focusInput]);
 
-    // Determine which map component to use based on game configuration
+    // Determine which map component to use based on GameManager configuration
     const renderMapComponent = () => {
-        // Vérification de sécurité avant d'accéder à gameConfig
         if (!gameConfig) {
             return <div className="loading-map">Loading map configuration...</div>;
         }
 
-        // Use DualMapChart for modes with multiple zones
-        if (gameConfig?.zones && Array.isArray(gameConfig.zones)) {
+        // Use DualMapChart for modes with multiple zones (from GameManager)
+        if (gameConfig.zones && Array.isArray(gameConfig.zones)) {
             return (
                 <DualMapChart 
                     gameConfig={gameConfig}
-                    currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentCountry}
-                    guessedCountries={isMultiplayer ? multiplayer.gameState.guessedCountries : gameLogic.guessedCountries}
+                    currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentEntity}
+                    guessedCountries={isMultiplayer ? multiplayer.gameState.guessedCountries : gameLogic.guessedEntities}
                     projectionConfig={projectionConfig}
                     theme={theme}
                 />
             );
         }
         
-        // Vérification de sécurité pour les modes à zone unique
-        if (!gameConfig.geoJson) {
+        // Use standard MapChart for single-zone modes
+        const geoJsonPath = gameManager.getGeoJsonPath(selectedMode, isMultiplayer);
+        if (!geoJsonPath) {
             return <div className="loading-map">Loading map data...</div>;
         }
         
-        // Use standard MapChart for single-zone modes
         return (
             <MapChart 
-                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentCountry}
-                guessedCountries={isMultiplayer ? multiplayer.gameState.guessedCountries : gameLogic.guessedCountries}
-                geoJsonPath={gameConfig.geoJson}
+                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentEntity}
+                guessedCountries={isMultiplayer ? multiplayer.gameState.guessedCountries : gameLogic.guessedEntities}
+                geoJsonPath={geoJsonPath}
                 geoIdProperty={gameConfig.geoIdProperty}
                 projectionConfig={projectionConfig}
                 theme={theme}
@@ -182,11 +199,20 @@ function App() {
         );
     };
 
-    // Show home screen if no mode selected and not in multiplayer flow
-    if (!selectedMode && !isMultiplayer) {
+    // Show home screen if no mode selected and not in any flow
+    if (!selectedMode && !isMultiplayer && !showModeSelection) {
         return <HomeScreen 
-            onSelectMode={setSelectedMode} 
+            onSelectMode={handleSelectSolo} 
             onSelectMultiplayer={handleSelectMultiplayer}
+        />;
+    }
+    
+    // Show mode selection screen
+    if (showModeSelection && gameType) {
+        return <ModeSelectionScreen
+            gameType={gameType}
+            onSelectMode={handleSelectMode}
+            onBack={handleBackFromModeSelection}
         />;
     }
     
@@ -198,6 +224,7 @@ function App() {
             onBack={handleBackFromLobby}
             isConnecting={multiplayer.isConnecting}
             connectionError={multiplayer.connectionError}
+            selectedMode={selectedMode}
         />;
     }
     
@@ -212,16 +239,14 @@ function App() {
         />;
     }
     
-    // If in multiplayer but no solo mode selected and not in lobby, default to Europe
+    // If in multiplayer but no mode selected and not in lobby, default to Europe
     if (isMultiplayer && !selectedMode && !showLobby) {
-        console.log('Setting selectedMode to europe (fallback)');
         setSelectedMode('europe');
         return <div className="loading-map">Loading multiplayer game...</div>;
     }
     
-    // Show loading while gameConfig is being set up (but only if we're not in the process of setting selectedMode)
+    // Show loading while gameConfig is being set up
     if (isMultiplayer && !gameConfig && selectedMode) {
-        console.log('gameConfig is null but selectedMode is set, showing loading...');
         return <div className="loading-map">Loading game configuration...</div>;
     }
 
@@ -231,9 +256,6 @@ function App() {
             minHeight: '100vh',
             transition: 'background-color 0.3s ease'
         }}>
-            {/* Theme toggle button */}
-            
-
             {/* Multiplayer-specific UI components */}
             {isMultiplayer && multiplayer.isConnected && (
                 <>
@@ -258,33 +280,31 @@ function App() {
                 </>
             )}
 
-            {/* Each component has a single responsibility */}
-            {!isMultiplayer && (
-                <GameHeader 
-                    timeLeft={gameLogic.timeLeft}
-                    formatTime={gameLogic.formatTime}
-                    theme={theme}
-                />
-            )}
+            {/* Game header and progress */}
+            {/* GameHeader supprimé pour éliminer la barre grise */}
 
-            {gameConfig && (
+
+            
+            {!isMultiplayer && selectedMode && gameConfig && (
                 <ScoreStars 
-                    guessedCountries={isMultiplayer ? multiplayer.gameState.guessedCountries : gameLogic.guessedCountries}
+                    guessedCountries={gameLogic.guessedEntities}
                     gameConfig={gameConfig}
                     theme={theme}
                 />
             )}
 
-            <div className="map-container">
-                {renderMapComponent()}
-            </div>
+            {/* Map visualization */}
+            {renderMapComponent()}
 
+            {/* Game controls */}
             <GameControls
-                // Game state - use multiplayer state if in multiplayer mode
-                gameEnded={isMultiplayer ? multiplayer.gameState.gameEnded : gameLogic.gameEnded}
-                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentCountry}
+                // Game state
+                gameEnded={gameLogic.gameEnded}
+                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentEntity}
+                guessedCount={isMultiplayer ? multiplayer.gameState.guessedCountries?.length : gameLogic.guessedEntities.length}
+                totalCount={isMultiplayer ? gameManager.getEntities('europe', true).length : gameLogic.totalEntities}
                 
-                // Input state - only show for current player in multiplayer
+                // Input handling
                 guessInput={isMultiplayer ? (multiplayer.isMyTurn ? gameLogic.guessInput : '') : gameLogic.guessInput}
                 setGuessInput={gameLogic.setGuessInput}
                 feedbackMessage={gameLogic.feedbackMessage}
@@ -311,7 +331,6 @@ function App() {
                 }
                 handleHint={isMultiplayer ? 
                     () => {
-                        // In multiplayer, hints should work for the current player
                         if (multiplayer.isMyTurn) {
                             enhancedActions.handleHint();
                         }
@@ -336,6 +355,7 @@ function App() {
                 selectedMode={selectedMode}
                 gameConfig={gameConfig}
                 theme={theme}
+                gameManager={gameManager}
                 
                 // Multiplayer-specific props
                 isMultiplayer={isMultiplayer}
@@ -345,7 +365,7 @@ function App() {
 
             <HintPopup 
                 hint={showHintPopup ? gameLogic.hint : null}
-                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentCountry}
+                currentCountry={isMultiplayer ? multiplayer.gameState.currentCountry : gameLogic.currentEntity}
                 gameConfig={gameConfig}
                 onClose={closeHintPopup}
                 theme={theme}
@@ -356,8 +376,8 @@ function App() {
                 <EndGameModal
                     // Game state
                     gameEnded={gameLogic.gameEnded}
-                    guessedCountries={gameLogic.guessedCountries}
-                    totalCountries={gameLogic.totalCountries}
+                    guessedCountries={gameLogic.guessedEntities}
+                    totalCountries={gameLogic.totalEntities}
                     gameTimeSeconds={gameLogic.gameTimeSeconds}
                     timeLeft={gameLogic.timeLeft}
                     

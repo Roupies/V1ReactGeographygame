@@ -1,28 +1,22 @@
-// Lobby screen component for multiplayer room management
-// Allows players to create new rooms or join existing ones
+// Lobby screen for multiplayer game setup
 import React, { useState } from 'react';
 
-export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnecting, connectionError }) {
+export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnecting, connectionError, selectedMode }) {
+  const [mode, setMode] = useState('create');
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
-  const [mode, setMode] = useState('create'); // 'create' or 'join'
-
-  const handleSubmit = (e) => {
+  
+  const handleCreateRoom = (e) => {
     e.preventDefault();
-    
-    if (!playerName.trim()) {
-      alert('Veuillez entrer votre nom');
-      return;
+    if (playerName.trim()) {
+      onCreateRoom(playerName, selectedMode);
     }
-
-    if (mode === 'create') {
-      onCreateRoom(playerName.trim());
-    } else {
-      if (!roomId.trim()) {
-        alert('Veuillez entrer l\'ID de la room');
-        return;
-      }
-      onJoinRoom(roomId.trim(), playerName.trim());
+  };
+  
+  const handleJoinRoom = (e) => {
+    e.preventDefault();
+    if (playerName.trim() && roomId.trim()) {
+      onJoinRoom(roomId, playerName);
     }
   };
 
@@ -66,6 +60,19 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
         Multijoueur
       </h1>
 
+      {/* Selected mode indicator */}
+      <div style={{
+        backgroundColor: '#28a745',
+        color: 'white',
+        padding: '8px 20px',
+        borderRadius: '20px',
+        marginBottom: '30px',
+        fontSize: '1.1em',
+        fontWeight: 'bold'
+      }}>
+        Mode : {selectedMode}
+      </div>
+
       {/* Mode selection */}
       <div style={{
         display: 'flex',
@@ -106,24 +113,19 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} style={{
+      <form onSubmit={mode === 'create' ? handleCreateRoom : handleJoinRoom} style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
         width: '100%',
-        maxWidth: '400px',
-        padding: '30px',
-        background: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '20px',
-        backdropFilter: 'blur(10px)'
+        maxWidth: '400px'
       }}>
-        {/* Player name input */}
         <div>
-          <label style={{ 
-            color: 'white', 
-            marginBottom: '8px', 
-            display: 'block',
-            fontSize: '1.1em'
+          <label style={{
+            color: 'white',
+            fontSize: '1.1em',
+            marginBottom: '10px',
+            display: 'block'
           }}>
             Votre nom :
           </label>
@@ -132,27 +134,24 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             placeholder="Entrez votre nom"
+            required
             style={{
               width: '100%',
-              padding: '15px',
-              borderRadius: '10px',
+              padding: '12px',
+              borderRadius: '8px',
               border: 'none',
-              fontSize: '1em',
-              outline: 'none'
+              fontSize: '1em'
             }}
-            maxLength={20}
-            disabled={isConnecting}
           />
         </div>
 
-        {/* Room ID input (only for join mode) */}
         {mode === 'join' && (
           <div>
-            <label style={{ 
-              color: 'white', 
-              marginBottom: '8px', 
-              display: 'block',
-              fontSize: '1.1em'
+            <label style={{
+              color: 'white',
+              fontSize: '1.1em',
+              marginBottom: '10px',
+              display: 'block'
             }}>
               ID de la room :
             </label>
@@ -161,79 +160,47 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               placeholder="Entrez l'ID de la room"
+              required
               style={{
                 width: '100%',
-                padding: '15px',
-                borderRadius: '10px',
+                padding: '12px',
+                borderRadius: '8px',
                 border: 'none',
-                fontSize: '1em',
-                outline: 'none'
+                fontSize: '1em'
               }}
-              disabled={isConnecting}
             />
           </div>
         )}
 
-        {/* Error message */}
-        {connectionError && (
-          <div style={{
-            color: '#ff6b6b',
-            background: 'rgba(255, 107, 107, 0.1)',
-            padding: '15px',
-            borderRadius: '10px',
-            textAlign: 'center',
-            fontSize: '1em'
-          }}>
-            {connectionError}
-          </div>
-        )}
-
-        {/* Submit button */}
         <button
           type="submit"
-          disabled={isConnecting || !playerName.trim() || (mode === 'join' && !roomId.trim())}
+          disabled={isConnecting}
           style={{
             padding: '15px',
-            borderRadius: '10px',
+            borderRadius: '8px',
             border: 'none',
             background: isConnecting ? '#6c757d' : '#28a745',
             color: 'white',
-            fontSize: '1.2em',
-            fontWeight: 'bold',
             cursor: isConnecting ? 'not-allowed' : 'pointer',
-            opacity: isConnecting ? 0.7 : 1
+            fontSize: '1.1em',
+            fontWeight: 'bold'
           }}
         >
-          {isConnecting ? 'Connexion...' : 
-           mode === 'create' ? 'Créer la partie' : 'Rejoindre la partie'}
+          {isConnecting ? 'Connexion...' : (mode === 'create' ? 'Créer la partie' : 'Rejoindre la partie')}
         </button>
-      </form>
 
-      {/* Instructions */}
-      <div style={{
-        marginTop: '30px',
-        padding: '20px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: '15px',
-        maxWidth: '500px',
-        textAlign: 'center'
-      }}>
-        <h3 style={{ color: 'white', marginBottom: '15px' }}>
-          Comment jouer :
-        </h3>
-        <ul style={{ 
-          color: '#ccc', 
-          textAlign: 'left', 
-          lineHeight: '1.6',
-          fontSize: '0.95em' 
-        }}>
-          <li>Partie à 2 joueurs avec tours alternés</li>
-          <li>Chaque joueur a 30 secondes par tour</li>
-          <li>Devinez le pays/région qui apparaît en rouge</li>
-          <li>Points bonus pour les bonnes réponses</li>
-          <li>Utilisez "Passer" si vous ne savez pas</li>
-        </ul>
-      </div>
+        {connectionError && (
+          <div style={{
+            color: '#dc3545',
+            backgroundColor: '#f8d7da',
+            padding: '10px',
+            borderRadius: '5px',
+            textAlign: 'center'
+          }}>
+            Erreur : {connectionError}
+          </div>
+        )}
+      </form>
     </div>
   );
 } 

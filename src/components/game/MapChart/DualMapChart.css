@@ -7,6 +7,31 @@
   gap: 20px;
   align-items: flex-start;
   justify-content: space-between;
+  position: relative; /* Pour le positionnement absolu des enfants */
+  overflow: hidden; /* Pour éviter les débordements */
+}
+
+/* Fond blanc spécifique pour le mode franceComplete */
+.dual-map-container.france-complete {
+  background-color: white !important;
+  background-image: none !important;
+}
+
+/* Assure que les zones ont aussi un fond blanc */
+.france-complete .map-zone {
+  background-color: white !important;
+  background-image: none !important;
+}
+
+.france-complete .map-zone .map-container {
+  background-color: white !important;
+  background-image: none !important;
+}
+
+/* Assure que les cartes SVG ont un fond blanc */
+.france-complete .map-zone svg {
+  background-color: white !important;
+  background-image: none !important;
 }
 
 .dual-map-container.horizontal {
@@ -31,21 +56,27 @@
 /* DOM-TOM zone (smaller, left side) */
 .map-zone.dom-tom {
   position: absolute; /* Position absolue pour contrôle total */
-  width: 50%; /* Taille fixe pour les DOM-TOM */
+  width: 50%; /* Augmenté de 40% à 50% pour plus de visibilité */
   height: 100%; /* Prend toute la hauteur */
-  right: 49%; /* Déplacé plus à gauche de la France */
+  left: 0; /* Positionné à gauche */
   top: 0;
   z-index: 10; /* S'assure qu'ils restent visibles */
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
 /* Métropole zone (larger, right side) */
 .map-zone.métropole {
-  margin-left: auto; /* Pousse vers la droite */
-  width: 75%; /* Prend la majorité de l'espace */
+  position: absolute; /* Position absolue pour un contrôle total */
+  width: 50%; /* Même largeur que DOM-TOM */
+  height: 100%; /* Prend toute la hauteur */
+  right: 0; /* Positionné à droite */
+  top: 0;
+  z-index: 5; /* En dessous des DOM-TOM */
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -61,6 +92,19 @@
   background: rgba(0,0,0,0.3);
   border-radius: 15px;
   backdrop-filter: blur(5px);
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+/* Labels spécifiques pour le mode franceComplete */
+.france-complete .zone-label {
+  color: #333;
+  text-shadow: none;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #ddd;
 }
 
 /* Active zone highlighting */
@@ -68,6 +112,13 @@
   background: rgba(76, 175, 80, 0.7);
   color: #fff;
   animation: pulse 2s infinite;
+}
+
+/* Active zone highlighting pour franceComplete */
+.france-complete .map-zone.active .zone-label {
+  background: rgba(76, 175, 80, 0.9);
+  color: #fff;
+  border-color: #4CAF50;
 }
 
 @keyframes pulse {
@@ -131,4 +182,15 @@
 .map-zone:not(.active) {
   opacity: 0.8;
   transition: opacity 0.3s ease;
+}
+
+/* Transparence spécifique pour DOM-TOM quand pas active */
+.map-zone.dom-tom:not(.active) {
+  opacity: 0.9; /* Augmenté de 0.8 à 0.9 pour plus de visibilité */
+  transition: opacity 0.3s ease;
+}
+
+/* Assure que la métropole reste bien visible */
+.map-zone.métropole {
+  opacity: 1; /* Toujours complètement visible */
 } 

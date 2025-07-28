@@ -330,15 +330,76 @@ export const useMultiplayer = () => {
             addMessage(`You joined as ${message.playerName}`, 'success');
         });
         
+        // Handle welcome message
+        room.onMessage('welcome', (message) => {
+            setPlayerId(room.sessionId);
+            setPlayerName(message.playerName || 'Player');
+            addMessage(message.message, 'success');
+        });
+        
         // Handle room full
         room.onMessage('room_full', (message) => {
             addMessage(message.message, 'info');
         });
         
+        // Set player ID immediately when connected
+        setPlayerId(room.sessionId);
+        
         // Handle game started
         room.onMessage('game_started', (message) => {
             addMessage('Game started!', 'success');
             addMessage(`${gameState.players[message.currentTurn]?.name || 'Someone'}'s turn`, 'info');
+        });
+        
+        // Handle gameStarted message (alternative name)
+        room.onMessage('gameStarted', (message) => {
+            addMessage('Game started!', 'success');
+            addMessage(`${gameState.players[message.firstTurn]?.name || 'Someone'}'s turn`, 'info');
+        });
+        
+        // Handle newCountry message
+        room.onMessage('newCountry', (message) => {
+            addMessage(`New country: ${message.countryName}`, 'info');
+        });
+        
+        // Handle turnChanged message
+        room.onMessage('turnChanged', (message) => {
+            addMessage(`Turn changed to ${message.nextPlayer}`, 'info');
+        });
+        
+        // Handle playerLeft message
+        room.onMessage('playerLeft', (message) => {
+            addMessage(message.message, 'warning');
+        });
+        
+        // Handle correctAnswer message
+        room.onMessage('correctAnswer', (message) => {
+            addMessage(`${message.playerName} correctly guessed ${message.countryName}!`, 'success');
+        });
+        
+        // Handle wrongAnswer message
+        room.onMessage('wrongAnswer', (message) => {
+            addMessage(`${message.playerName} guessed wrong: ${message.guess}`, 'error');
+        });
+        
+        // Handle playerSkipped message
+        room.onMessage('playerSkipped', (message) => {
+            addMessage(`${message.playerName} skipped their turn`, 'info');
+        });
+        
+        // Handle gameEnded message
+        room.onMessage('gameEnded', (message) => {
+            addMessage(`Game ended: ${message.reason}`, 'info');
+        });
+        
+        // Handle gameRestarted message
+        room.onMessage('gameRestarted', (message) => {
+            addMessage('Game restarted!', 'success');
+        });
+        
+        // Handle chatMessage message
+        room.onMessage('chatMessage', (message) => {
+            addMessage(`${message.playerName}: ${message.message}`, 'chat');
         });
         
         // Handle correct answer
@@ -414,22 +475,14 @@ export const useMultiplayer = () => {
     }, [room, addMessage]);
     
     const makeGuess = useCallback((guess) => {
-        console.log('makeGuess called with:', guess);
         if (room && guess.trim()) {
-            console.log('Sending guess to server:', guess.trim());
             room.send('guess', { guess: guess.trim() });
-        } else {
-            console.log('Cannot send guess - room:', !!room, 'guess:', guess);
         }
     }, [room]);
     
     const skipCountry = useCallback(() => {
-        console.log('skipCountry called');
         if (room) {
-            console.log('Sending skip to server');
             room.send('skip');
-        } else {
-            console.log('Cannot send skip - no room');
         }
     }, [room]);
     

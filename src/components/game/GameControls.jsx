@@ -26,7 +26,8 @@ const GameControls = ({
     // Configuration
     selectedMode,
     gameConfig,
-    theme
+    theme,
+    gameManager // Added gameManager prop
 }) => {
     // Don't render if game ended or no current entity
     if (gameEnded || !currentCountry) {
@@ -34,18 +35,21 @@ const GameControls = ({
     }
 
     const getPlaceholder = () => {
-        switch(gameConfig?.label) {
-            case "Pays d'Europe":
-                return "Entrez le nom du pays en surbrillance";
-            case "Régions de France métropolitaine":
-                return "Entrez le nom de la région en surbrillance";
-            case "Toutes les régions françaises":
-                return "Entrez le nom de la région en surbrillance";
-            case "Toutes les régions (carte unique)":
-                return "Entrez le nom de la région en surbrillance";
-            default:
-                return "Entrez le nom de la zone en surbrillance";
+        // Use custom placeholder from GameManager if available
+        const uiCustomization = gameManager?.getUICustomization?.(selectedMode, false);
+        if (uiCustomization?.customPlaceholder) {
+            return uiCustomization.customPlaceholder;
         }
+        
+        // Use GameManager's unitLabel for automatic placeholder generation
+        const unitLabel = gameConfig?.unitLabel || 'entité';
+        // Special case for "région" to use "de la" instead of "de l'"
+        if (unitLabel === 'région') {
+            return `Entrez le nom de la ${unitLabel} en surbrillance`;
+        }
+        // Check for French vowels including accented ones
+        const frenchVowels = /^[aeiouàâäéèêëïîôöùûüÿ]/i;
+        return `Entrez le nom ${frenchVowels.test(unitLabel) ? 'de l\'' : 'du '}${unitLabel} en surbrillance`;
     };
 
     return (

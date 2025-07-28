@@ -2,6 +2,7 @@
 // Used for modes that require multiple maps (e.g., France + DOM-TOM)
 import React from 'react';
 import MapChart from './MapChart';
+import gameManager from '../../../services/GameManager';
 import './DualMapChart.css';
 
 const DualMapChart = ({
@@ -19,11 +20,17 @@ const DualMapChart = ({
 
     const { zones, layout } = gameConfig;
 
+    // Get zones with proper GeoJSON paths
+    const zonesWithPaths = zones.map(zone => ({
+        ...zone,
+        geoJson: `/geojson/${zone.geoJsonFile}`
+    }));
+
     // Determine which zone contains the current country
     const getCurrentZoneForCountry = (country) => {
         if (!country) return null;
         
-        return zones.find(zone => 
+        return zonesWithPaths.find(zone => 
             zone.regionCodes.includes(country.code)
         );
     };
@@ -31,8 +38,8 @@ const DualMapChart = ({
     const currentZone = getCurrentZoneForCountry(currentCountry);
 
     return (
-        <div className={`dual-map-container ${layout?.orientation || 'horizontal'}`}>
-            {zones.map((zone, index) => {
+        <div className={`dual-map-container ${layout?.orientation || 'horizontal'} ${gameConfig?.label?.includes('régions françaises') ? 'france-complete' : ''}`}>
+            {zonesWithPaths.map((zone, index) => {
                 // Determine if this zone contains the current country
                 const isActiveZone = currentZone?.name === zone.name;
                 
@@ -49,6 +56,7 @@ const DualMapChart = ({
                         key={zone.name} 
                         className={`map-zone ${zoneClass} ${isActiveZone ? 'active' : ''}`}
                     >
+                        <div className="zone-label">{zone.name}</div>
                         <MapChart
                             // Only highlight current country if it's in this zone
                             currentCountry={isActiveZone ? currentCountry : null}

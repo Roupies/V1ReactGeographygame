@@ -53,6 +53,34 @@ const MapChart = ({
 }) => { 
     // State for managing responsive map projection
     const [currentProjection, setCurrentProjection] = useState(projectionConfig || DEFAULT_PROJECTION);
+    const [geoData, setGeoData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Load GeoJSON data
+    useEffect(() => {
+        console.log('MapChart loading GeoJSON from:', geoJsonPath);
+        setLoading(true);
+        setError(null);
+        
+        fetch(geoJsonPath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('GeoJSON loaded successfully:', data);
+                setGeoData(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error loading GeoJSON:', err);
+                setError(err.message);
+                setLoading(false);
+            });
+    }, [geoJsonPath]);
 
     // Responsive design handler - only update when projectionConfig actually changes
     useEffect(() => {
@@ -324,63 +352,91 @@ const MapChart = ({
             backgroundRepeat: 'repeat',
             position: 'relative'
         }}>
-            {/* Main map component with azimuthal equal-area projection */}
-            <ComposableMap 
-                projection="geoAzimuthalEqualArea" 
-                projectionConfig={currentProjection}
-                style={{
-                    background: 'transparent',
-                    width: '100%',
-                    height: '100%'
-                }}
-            >
-                {/* Geographic regions rendering */}
-                <Geographies geography={geoJsonPath}>
-                    {({ geographies }) =>
-                        geographies.map(geo => (
-                            <Geography
-                                key={geo.rsmKey} 
-                                geography={geo}
-                                style={getCountryStyle(geo)}
-                            />
-                        ))
-                    }
-                </Geographies>
+            {loading && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    color: '#666',
+                    fontSize: '14px'
+                }}>
+                    Chargement de la carte...
+                </div>
+            )}
+            
+            {error && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    color: '#ff4444',
+                    fontSize: '14px',
+                    textAlign: 'center'
+                }}>
+                    Erreur de chargement: {error}
+                </div>
+            )}
+            
+            {!loading && !error && geoData && (
+                <ComposableMap 
+                    projection="geoAzimuthalEqualArea" 
+                    projectionConfig={currentProjection}
+                    style={{
+                        background: 'transparent',
+                        width: '100%',
+                        height: '100%'
+                    }}
+                >
+                    {/* Geographic regions rendering */}
+                    <Geographies geography={geoData}>
+                        {({ geographies }) =>
+                            geographies.map(geo => (
+                                <Geography
+                                    key={geo.rsmKey} 
+                                    geography={geo}
+                                    style={getCountryStyle(geo)}
+                                />
+                            ))
+                        }
+                    </Geographies>
 
-                {/* Markers for micro-states - only shown in Europe mode */}
-                {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
-                    // Check game state for this micro-state
-                    const isCurrent = currentCountry && 
-                        String(currentCountry.code || currentCountry.isoCode) === entityId;
-                    const isGuessed = guessedCountries.some(c => 
-                        String(c.code || c.isoCode) === entityId
-                    );
-                    
-                    // Only show marker if it's the current entity or has been guessed
-                    // This prevents showing all micro-states at once (would be confusing)
-                    if (!isCurrent && !isGuessed) {
-                        return null;
-                    }
-                    
-                    const markerStyle = getMarkerStyle(entityId);
-                    return (
-                        <Marker key={entityId} coordinates={coordinates}>
-                            {/* Simple circle marker with drop shadow for visibility */}
-                            <circle 
-                                cx="0"
-                                cy="0"
-                                r={markerStyle.radius}
-                                fill={markerStyle.fill}
-                                stroke={markerStyle.stroke}
-                                strokeWidth={markerStyle.strokeWidth}
-                                style={{
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' // Shadow for better visibility
-                                }}
-                            />
-                        </Marker>
-                    );
-                })}
-            </ComposableMap>
+                    {/* Markers for micro-states - only shown in Europe mode */}
+                    {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
+                        // Check game state for this micro-state
+                        const isCurrent = currentCountry && 
+                            String(currentCountry.code || currentCountry.isoCode) === entityId;
+                        const isGuessed = guessedCountries.some(c => 
+                            String(c.code || c.isoCode) === entityId
+                        );
+                        
+                        // Only show marker if it's the current entity or has been guessed
+                        // This prevents showing all micro-states at once (would be confusing)
+                        if (!isCurrent && !isGuessed) {
+                            return null;
+                        }
+                        
+                        const markerStyle = getMarkerStyle(entityId);
+                        return (
+                            <Marker key={entityId} coordinates={coordinates}>
+                                {/* Simple circle marker with drop shadow for visibility */}
+                                <circle 
+                                    cx="0"
+                                    cy="0"
+                                    r={markerStyle.radius}
+                                    fill={markerStyle.fill}
+                                    stroke={markerStyle.stroke}
+                                    strokeWidth={markerStyle.strokeWidth}
+                                    style={{
+                                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' // Shadow for better visibility
+                                    }}
+                                />
+                            </Marker>
+                        );
+                    })}
+                </ComposableMap>
+            )}
         </div>
     );
 };
