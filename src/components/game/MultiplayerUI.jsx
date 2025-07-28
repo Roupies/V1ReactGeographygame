@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 
 // Waiting room component - shows while waiting for players to ready up
 export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId }) {
-  const players = Object.values(gameState.players);
-  const allReady = players.every(p => p.isReady);
-  const canStart = players.length === 2 && allReady;
-
+  const allPlayers = Object.values(gameState.players || {});
+  const players = allPlayers.filter(player => player && player.id); // Only valid players with IDs
+  
+  const canStart = players.length === 2 && 
+                   players.every(p => p.isReady);
 
 
   return (

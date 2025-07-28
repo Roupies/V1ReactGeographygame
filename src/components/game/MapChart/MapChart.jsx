@@ -104,10 +104,29 @@ const MapChart = ({
     const getCountryStyle = useMemo(() => (geo) => {
         const geoId = String(geo.properties[geoIdProperty]);
         
+
+        
         // Check if this entity has been successfully guessed
-        const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => 
-            String(c.code) === geoId || String(c.isoCode) === geoId
-        );
+        const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => {
+            const codeMatch = String(c.code) === geoId;
+            const isoMatch = String(c.isoCode) === geoId;
+            const matches = codeMatch || isoMatch;
+            
+            // Debug log for French regions specifically
+            if (geoId && guessedCountries.length > 0 && Math.random() < 0.1) {
+                console.log('MapChart color check:', {
+                    geoId,
+                    entityCode: c.code,
+                    entityIso: c.isoCode,
+                    codeMatch,
+                    isoMatch,
+                    matches,
+                    guessedCount: guessedCountries.length
+                });
+            }
+            
+            return matches;
+        });
         
         // Check if this is the current entity to guess
         const isCurrent = currentCountry && (

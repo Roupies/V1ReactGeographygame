@@ -89,58 +89,104 @@ export const useMultiplayer = () => {
         // Handle state changes with better error handling
         room.onStateChange((state) => {
             try {
-                // Only log on first connection or significant changes
-                if (!gameState.gameStarted) {
-                    console.log('✔️ Connected and state received!');
-                }
+
                 
-                // Process players with error handling
-                const playersObj = {};
-                try {
-                    // Method 1: forEach
-                    state.players.forEach((player, key) => {
-                        playersObj[key] = {
-                            id: key,
-                            name: player.name,
-                            score: player.score,
-                            isReady: player.isReady,
-                            isCurrentTurn: key === state.currentTurn
-                        };
-                    });
-                } catch (playerError) {
-                    console.error('Error processing players:', playerError);
-                    // Fallback: try entries method
+                // Convert ArraySchema to regular array for guessedCountries
+                const newGuessedCountries = (() => {
                     try {
-                        for (const [key, player] of state.players.entries()) {
-                            playersObj[key] = {
-                                id: key,
-                                name: player.name,
-                                score: player.score,
-                                isReady: player.isReady,
-                                isCurrentTurn: key === state.currentTurn
-                            };
+                        if (!state.guessedCountries) return [];
+                        if (Array.isArray(state.guessedCountries)) return [...state.guessedCountries];
+                        
+                        // Convert ArraySchema to regular array and deep clone objects
+                        const arr = [];
+                        if (typeof state.guessedCountries.forEach === 'function') {
+                            state.guessedCountries.forEach(item => {
+                                // Deep clone the Colyseus object to a plain JS object
+                                // For French regions, use 'code', for Europe use 'isoCode'
+                                const plainObject = {
+                                    name: item.name,
+                                    code: item.code || item.isoCode, // Use code for French regions, isoCode for Europe
+                                    isoCode: item.isoCode || item.code // Fallback
+                                };
+                                arr.push(plainObject);
+                            });
                         }
-                    } catch (entriesError) {
-                        console.error('Error with entries method:', entriesError);
+                        return arr;
+                    } catch (e) {
+                        console.error('Error processing guessedCountries:', e);
+                        return [];
                     }
-                }
+                })();
+
+                // Convert MapSchema to regular object for players
+                const newPlayers = (() => {
+                    try {
+                        if (!state.players) return {};
+                        if (typeof state.players === 'object' && !state.players.forEach) return { ...state.players };
+                        
+                        // Convert MapSchema to regular object
+                        const playersObj = {};
+                        if (typeof state.players.forEach === 'function') {
+                            state.players.forEach((player, key) => {
+                                if (player && player.id) {
+                                    playersObj[key] = {
+                                        id: player.id,
+                                        name: player.name,
+                                        isReady: player.isReady,
+                                        score: player.score
+                                    };
+                                }
+                            });
+                        }
+                        return playersObj;
+                    } catch (e) {
+                        console.error('Error processing players:', e);
+                        return {};
+                    }
+                })();
                 
-                setGameState({
-                    players: playersObj,
+                // Convert ArraySchema to regular array for remainingCountries  
+                const newRemainingCountries = (() => {
+                    try {
+                        if (!state.remainingCountries) return [];
+                        if (Array.isArray(state.remainingCountries)) return [...state.remainingCountries];
+                        
+                        const arr = [];
+                        if (typeof state.remainingCountries.forEach === 'function') {
+                            state.remainingCountries.forEach(item => arr.push(item));
+                        }
+                        return arr;
+                    } catch (e) {
+                        console.error('Error processing remainingCountries:', e);
+                        return [];
+                    }
+                })();
+                
+                setGameState(prev => ({
+                    ...prev,
+                    players: newPlayers,
                     currentTurn: state.currentTurn,
-                    gameStarted: state.gameStarted,
-                    gameEnded: state.gameEnded,
-                    turnTimeLeft: state.turnTimeLeft,
-                    turnNumber: state.turnNumber,
-                    remainingCountries: state.remainingCountries || [],
-                    guessedCountries: state.guessedCountries || [],
+                    turnTimeLeft: state.turnTimeLeft || 30,
+                    turnNumber: state.turnNumber || 1,
+                    gameStarted: state.gameStarted || false,
+                    gameEnded: state.gameEnded || false,
+                    remainingCountries: newRemainingCountries,
+                    guessedCountries: newGuessedCountries,
                     currentCountry: state.currentCountryName ? {
                         name: state.currentCountryName,
                         code: state.currentCountryCode,
                         isoCode: state.currentCountryCode
                     } : null,
                     gameMode: state.gameMode
-                });
+                }));
+
+                // Force reset gameEnded if game is actually running
+                if (state.gameStarted && !state.gameEnded) {
+                    setGameState(prev => ({
+                        ...prev,
+                        gameEnded: false
+                    }));
+                }
                 
             } catch (error) {
                 console.error('Error in onStateChange:', error);
@@ -149,7 +195,6 @@ export const useMultiplayer = () => {
         
         // Handle player joining
         room.onMessage('joined', (message) => {
-            console.log('Player joined:', message);
             setPlayerId(message.playerId);
             addMessage(`Vous avez rejoint en tant que ${message.playerName}`, 'success');
         });
@@ -173,17 +218,35 @@ export const useMultiplayer = () => {
         room.onMessage('game_started', (message) => {
             addMessage('Jeu commencé !', 'success');
             addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+            // Reset gameEnded when game starts
+            setGameState(prev => ({
+                ...prev,
+                gameEnded: false
+            }));
         });
         
         // Handle gameStarted message (alternative name)
         room.onMessage('gameStarted', (message) => {
             addMessage('Jeu commencé !', 'success');
             addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+            // Reset gameEnded when game starts
+            setGameState(prev => ({
+                ...prev,
+                gameEnded: false
+            }));
         });
         
         // Handle newCountry message
         room.onMessage('newCountry', (message) => {
-            // Don't reveal the country name to maintain game integrity
+            // Update current country with new data from server
+            setGameState(prev => ({
+                ...prev,
+                currentCountry: message.countryName ? {
+                    name: message.countryName,
+                    code: message.countryCode,
+                    isoCode: message.countryCode
+                } : null
+            }));
         });
         
         // Handle turnChanged message
@@ -214,6 +277,7 @@ export const useMultiplayer = () => {
         
         // Handle gameEnded message
         room.onMessage('gameEnded', (message) => {
+            console.log('Game ended message received:', message);
             addMessage(`Jeu terminé : ${message.reason}`, 'info');
             // Update game state to show end modal
             setGameState(prev => ({
@@ -225,6 +289,11 @@ export const useMultiplayer = () => {
         // Handle gameRestarted message
         room.onMessage('gameRestarted', (message) => {
             addMessage('Jeu relancé !', 'success');
+            // Reset gameEnded when game restarts
+            setGameState(prev => ({
+                ...prev,
+                gameEnded: false
+            }));
         });
         
         // Handle chatMessage message
@@ -281,7 +350,6 @@ export const useMultiplayer = () => {
         
         // Handle room leave
         room.onLeave((code) => {
-            console.log('Left room');
             setIsConnected(false);
             setRoom(null);
             setGameState({
@@ -316,7 +384,7 @@ export const useMultiplayer = () => {
         cleanupRef.current = false;
         
         try {
-            console.log('Creating room...', { playerName, gameMode });
+
             
             // Add timeout and better error handling
             const newRoom = await Promise.race([
@@ -370,7 +438,7 @@ export const useMultiplayer = () => {
         cleanupRef.current = false;
         
         try {
-            console.log('Joining room...', { roomId, playerName });
+
             
             const newRoom = await Promise.race([
                 client.joinById(roomId, { playerName }),
@@ -416,9 +484,8 @@ export const useMultiplayer = () => {
     const readyUp = useCallback(() => {
         if (room) {
             room.send('ready');
-            addMessage('You are ready!', 'info');
         }
-    }, [room, addMessage]);
+    }, [room]);
     
     const makeGuess = useCallback((guess) => {
         if (room && guess.trim()) {
@@ -488,9 +555,9 @@ export const useMultiplayer = () => {
     // Computed properties
     const isMyTurn = playerId === gameState.currentTurn;
     const currentPlayer = playerId ? gameState.players[playerId] : null;
-    const otherPlayers = Object.values(gameState.players).filter(p => p.id !== playerId);
+    const otherPlayers = Object.values(gameState.players).filter(p => p && p.id !== playerId);
     const canStartGame = Object.keys(gameState.players).length === 2 && 
-                        Object.values(gameState.players).every(p => p.isReady) && 
+                        Object.values(gameState.players).every(p => p && p.isReady) && 
                         !gameState.gameStarted;
     
     return {

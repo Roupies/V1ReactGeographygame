@@ -87,8 +87,11 @@ export const useGameActions = (
     };
 
     // Show hint with GameManager feedback
-    const handleHint = () => {
-        if (gameState.gameEnded || !gameState.currentEntity) {
+    const handleHint = (currentEntity = null) => {
+        // Use provided entity or fallback to gameState.currentEntity
+        const entity = currentEntity || gameState.currentEntity;
+        
+        if (gameState.gameEnded || !entity) {
             setFeedbackMessage("Impossible d'afficher l'indice : jeu terminé ou aucune entité disponible.");
             return;
         }
@@ -99,7 +102,7 @@ export const useGameActions = (
 
         statistics.incrementHints();
         
-        const firstLetter = gameState.currentEntity.name.charAt(0).toUpperCase();
+        const firstLetter = entity.name.charAt(0).toUpperCase();
         
         // Get hint message from GameManager
         const hintMessage = gameManager.getFeedbackMessage(

@@ -152,7 +152,8 @@ export class GeographyRoom extends Room {
     console.log(`Current country: ${country.name}`);
     
     this.broadcast("newCountry", {
-      countryCode: country.isoCode
+      countryCode: country.isoCode,
+      countryName: country.name
     });
     
     this.startTurnTimer();
@@ -244,6 +245,13 @@ export class GeographyRoom extends Room {
       message: `${player.name} skipped their turn`
     });
     
+    // Remove the current country from remaining countries
+    if (this.state.remainingCountries.length > 0) {
+      this.state.remainingCountries.shift();
+    }
+    
+    // Move to next country and switch turn
+    this.nextCountry();
     this.switchTurn();
   }
   

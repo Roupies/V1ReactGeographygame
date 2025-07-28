@@ -44,9 +44,10 @@ const DualMapChart = ({
                 const isActiveZone = currentZone?.name === zone.name;
                 
                 // Filter guessed countries for this zone
-                const guessedInThisZone = guessedCountries.filter(country =>
-                    zone.regionCodes.includes(country.code)
-                );
+                const guessedInThisZone = Array.isArray(guessedCountries) ? 
+                    guessedCountries.filter(country =>
+                        zone.regionCodes.includes(country.code)
+                    ) : [];
 
                 // Create CSS-safe class name
                 const zoneClass = zone.name === "DOM-TOM" ? "dom-tom" : zone.name.toLowerCase();

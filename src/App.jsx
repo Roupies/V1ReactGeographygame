@@ -54,16 +54,10 @@ function App() {
         
         // In multiplayer, use the mode from server state if available
         if (isMultiplayer && multiplayer.gameState.gameMode) {
-            console.log('Getting multiplayer config for mode:', multiplayer.gameState.gameMode);
-            const config = gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
-            console.log('Multiplayer config:', config);
-            return config;
+            return gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
         }
         
-        console.log('Getting solo config for mode:', selectedMode, 'isMultiplayer:', isMultiplayer);
-        const config = gameManager.getMode(selectedMode, isMultiplayer);
-        console.log('Solo config:', config);
-        return config;
+        return gameManager.getMode(selectedMode, isMultiplayer);
     }, [selectedMode, isMultiplayer, multiplayer.gameState.gameMode]);
 
     // Use modular game logic hook with GameManager
@@ -352,8 +346,8 @@ function App() {
                 }
                 handleHint={isMultiplayer ? 
                     () => {
-                        if (multiplayer.isMyTurn) {
-                            enhancedActions.handleHint();
+                        if (multiplayer.isMyTurn && multiplayer.gameState.currentCountry) {
+                            enhancedActions.handleHint(multiplayer.gameState.currentCountry);
                         }
                     } : 
                     enhancedActions.handleHint
