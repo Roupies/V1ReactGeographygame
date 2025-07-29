@@ -80,7 +80,7 @@ function App() {
             setSelectedMode(multiplayer.gameState.gameMode);
         }
     }, [isMultiplayer, multiplayer.gameState.gameMode, selectedMode]);
-    
+
     // Stable goToHome function
     const goToHome = useCallback(() => {
         setSelectedMode(null);
@@ -279,6 +279,7 @@ function App() {
                         gameState={multiplayer.gameState}
                         isMyTurn={multiplayer.isMyTurn}
                         currentPlayer={multiplayer.currentPlayer}
+                        isRaceMode={multiplayer.isRaceMode}
                     />
                     <PlayerScores
                         gameState={multiplayer.gameState}

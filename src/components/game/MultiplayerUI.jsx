@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId }) {
   const allPlayers = Object.values(gameState.players || {});
   const players = allPlayers.filter(player => player && player.id); // Only valid players with IDs
-  
+
   const canStart = players.length === 2 && 
                    players.every(p => p.isReady);
 
@@ -153,9 +153,33 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
   );
 }
 
-// Turn indicator component - shows whose turn it is
-export function TurnIndicator({ gameState, isMyTurn, currentPlayer }) {
+// Turn indicator component - shows whose turn it is or race mode info
+export function TurnIndicator({ gameState, isMyTurn, currentPlayer, isRaceMode }) {
   const currentTurnPlayer = gameState.players[gameState.currentTurn];
+  
+  if (isRaceMode) {
+    return (
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        background: 'linear-gradient(45deg, #ff6b35, #ff8c42)',
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '15px',
+        fontWeight: 'bold',
+        fontSize: '1.1em',
+        zIndex: 1000,
+        animation: 'pulse 1.5s infinite',
+        textAlign: 'center'
+      }}>
+        🏁 Mode Course
+        <div style={{ fontSize: '0.9em', marginTop: '5px' }}>
+          Premier à 100 pts !
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div style={{

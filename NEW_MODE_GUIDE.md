@@ -1,179 +1,106 @@
-# Guide : Ajouter un nouveau mode de jeu avec GameManager
+# Guide des Modes de Jeu - Mode Course 🏁
 
-## Architecture refactorisée 🚀
+## Nouveau Mode : Course Europe - Premier à 100 pts
 
-La nouvelle architecture utilise **GameManager** pour centraliser toute la logique de jeu, rendant l'ajout de nouveaux modes extrêmement simple et modulaire.
+### 🎯 Objectif
+Le premier joueur à atteindre **100 points** gagne la partie !
 
-## Avantages de la refactorisation
+### 🎮 Caractéristiques du Mode Course
 
-### Avant (architecture couplée)
-- Logique dispersée dans plusieurs fichiers
-- Hooks dépendants des modes spécifiques
-- Ajout de nouveaux modes = modifications multiples
-- Code non réutilisable
+#### Pas de Tours
+- **Tous les joueurs peuvent jouer simultanément**
+- Pas d'attente de tour
+- Action en temps réel
 
-### Après (architecture avec GameManager)
-- ✅ **Logique centralisée** dans GameManager
-- ✅ **Hooks agnostiques** aux modes de jeu
-- ✅ **Ajout de modes en 1 seul endroit**
-- ✅ **Code entièrement réutilisable**
+#### Système de Points
+- **+10 points** pour chaque bonne réponse
+- **-2 points** pour chaque mauvaise réponse
+- Le score ne peut pas descendre en dessous de 0
 
-## Comment ajouter un nouveau mode en 3 étapes
+#### Conditions de Victoire
+- Premier à atteindre **100 points** gagne immédiatement
+- La partie se termine dès qu'un joueur atteint l'objectif
 
-### 1. Créer les données du mode (fichier unique)
+### 🛠️ Architecture Technique
 
-Dans `src/data/gameModes.js`, ajoutez simplement :
-
+#### Configuration Serveur (`shared/data/entities.js`)
 ```javascript
-// Exemple : Mode Capitales Européennes
-europeCapitals: {
-  label: "Capitales d'Europe",
-  entities: EUROPEAN_CAPITALS, // Vos données
-  geoJsonFile: 'europe.json',
-  geoIdProperty: 'ISO_A3',
-  unitLabel: 'capitales',
-  projectionConfig: { 
-    rotate: [-8, -50, 0],
-    scale: 550
-  },
-  victoryCondition: 'all_entities',
-  feedbackMessages: {
-    victory: 'Bravo ! Vous connaissez toutes les capitales !',
-    hint: 'Cette capitale commence par la lettre',
-    correctAnswer: 'Exact ! C\'était'
-  },
-  showHint: true,
-  showSkip: true,
-  scoreType: 'stars',
-  timerType: 'countdown'
+europeRace: {
+    entities: EUROPEAN_COUNTRIES,
+    name: 'europeRace',
+    idProperty: 'isoCode',
+    gameType: 'race',
+    scoreThreshold: 100,
+    pointsPerCorrect: 10,
+    pointsPerWrong: -2
 }
 ```
 
-### 2. C'est tout ! 🎉
-
-Seriously. Votre nouveau mode apparaît automatiquement :
-- ✅ Dans le menu de sélection
-- ✅ Avec toute la logique de jeu
-- ✅ Avec les statistiques
-- ✅ Avec les feedbacks personnalisés
-- ✅ Compatible multijoueur (si désiré)
-
-### 3. Mode avancé : Dual Map (optionnel)
-
-Pour des modes avec plusieurs cartes (comme France + DOM-TOM) :
-
+#### Configuration Client (`src/data/gameModes.js`)
 ```javascript
-franceAdvanced: {
-  label: "France Avancée",
-  entities: FRENCH_DATA,
-  unitLabel: 'régions',
-  geoIdProperty: 'code',
-  zones: [
-    {
-      name: "Métropole",
-      geoJsonFile: 'france-metro.geojson',
-      projectionConfig: { rotate: [-2, -46, 0], scale: 1800 },
-      regionCodes: ['11', '24', '27', ...]
-    },
-    {
-      name: "Outre-mer", 
-      geoJsonFile: 'outre-mer.geojson',
-      projectionConfig: { rotate: [55, 5, 0], scale: 800 },
-      regionCodes: ['01', '02', '03', ...]
-    }
-  ],
-  layout: { type: 'dual', orientation: 'horizontal' },
-  // ... reste de la config
+europeRace: {
+    ...MODE_CONFIGS.europe,
+    label: "Course Europe - Premier à 100 pts",
+    scoreType: 'points',
+    victoryCondition: 'score_threshold',
+    scoreThreshold: 100,
+    gameType: 'race',
+    pointsPerCorrect: 10,
+    pointsPerWrong: -2,
+    // UI personnalisée avec couleurs orange/rouge pour le thème course
+    primaryColor: '#ff6b35',
+    secondaryColor: '#ff8c42',
+    icon: '🏁'
 }
 ```
 
-## GameManager : API complète
+### 🔧 Modifications Techniques
 
-```javascript
-// Récupérer un mode
-const mode = gameManager.getMode('europe', false);
+#### Serveur (`server/rooms/GeographyRoom.js`)
+1. **Détection du mode** : `this.isRaceMode = modeConfig?.gameType === 'race'`
+2. **Pas de tours** : `this.state.currentTurn = ""` en mode course
+3. **Validation élargie** : Tous les joueurs peuvent deviner
+4. **Condition de victoire** : Vérification automatique à 100 points
 
-// Récupérer les entités d'un mode
-const entities = gameManager.getEntities('europe', false);
+#### Client (`src/hooks/useMultiplayer.js`)
+1. **Détection du mode** : `const isRaceMode = gameState.gameMode === 'europeRace'`
+2. **Permissions étendues** : `isMyTurn = isRaceMode ? gameStarted && !gameEnded : playerId === currentTurn`
+3. **Messages adaptés** : Affichage des scores dans le chat
 
-// Valider une réponse
-const isCorrect = gameManager.validateAnswer('France', entity);
+#### Interface (`src/components/game/MultiplayerUI.jsx`)
+1. **TurnIndicator modifié** : Affiche "🏁 Mode Course" au lieu des tours
+2. **Messages de score** : Affichage des points gagnés/perdus
 
-// Récupérer un message de feedback
-const message = gameManager.getFeedbackMessage('europe', 'hint', false, {firstLetter: 'F'});
+### 🎨 Éléments Visuels
 
-// Récupérer le chemin GeoJSON
-const path = gameManager.getGeoJsonPath('europe', false);
+#### Couleurs du Mode Course
+- **Primaire** : `#ff6b35` (Orange vif)
+- **Secondaire** : `#ff8c42` (Orange clair)
+- **Dégradé** : `linear-gradient(45deg, #ff6b35, #ff8c42)`
+- **Icône** : 🏁 (Drapeau à damier)
 
-// Vérifier les conditions de victoire
-const victory = gameManager.checkVictoryCondition('europe', gameState, false);
+#### Interface Spécifique
+- Indicateur de tour remplacé par "Mode Course"
+- Animation pulse continue
+- Messages avec scores affichés
+- Objectif visible : "Premier à 100 pts !"
 
-// Options d'UI
-const uiOptions = gameManager.getUIOptions('europe', false);
-```
+### 🚀 Comment Ajouter un Nouveau Mode Course
 
-## Exemples de nouveaux modes possibles
+1. **Ajouter la configuration serveur** dans `shared/data/entities.js`
+2. **Ajouter la configuration client** dans `src/data/gameModes.js`
+3. **Spécifier `gameType: 'race'`** dans les deux configurations
+4. **Définir `scoreThreshold`**, `pointsPerCorrect`, `pointsPerWrong`
+5. **Personnaliser l'UI** avec couleurs et icône appropriées
 
-### Mode Départements Français
-```javascript
-franceDepartments: {
-  label: "Départements français",
-  entities: FRENCH_DEPARTMENTS,
-  geoJsonFile: 'france-departments.json',
-  geoIdProperty: 'code_dept',
-  // ... config
-}
-```
+### 📊 Comparaison des Modes
 
-### Mode Fastest (course contre la montre)
-```javascript
-fastest: {
-  label: "Mode Rapide (30s)",
-  entities: EUROPEAN_COUNTRIES.slice(0, 10),
-  victoryCondition: 'time_based',
-  scoreType: 'points',
-  timerType: 'countdown',
-  timeLimit: 30,
-  // ... config
-}
-```
+| Aspect | Mode Tour par Tour | Mode Course |
+|--------|------------------|-------------|
+| **Tours** | Alternés, 30s max | Simultanés, illimités |
+| **Points** | +10 par bonne réponse | +10/-2 selon réponse |
+| **Victoire** | Tous pays trouvés | Premier à 100 pts |
+| **Rythme** | Réfléchi | Frénétique |
+| **Stratégie** | Précision | Vitesse + Précision |
 
-### Mode Difficile (sans indices)
-```javascript
-hardMode: {
-  label: "Mode Expert",
-  entities: EUROPEAN_COUNTRIES,
-  showHint: false,
-  showSkip: false,
-  feedbackMessages: {
-    victory: 'Incroyable ! Vous êtes un expert !',
-    correctAnswer: 'Parfait !'
-  },
-  // ... config
-}
-```
-
-## Hooks agnostiques
-
-Tous les hooks sont maintenant **complètement agnostiques** :
-
-- `useGameState` → Gère n'importe quelles entités
-- `useGameActions` → Utilise GameManager pour validation
-- `useGameLogic` → Orchestre tout via GameManager
-- `useGameStatistics` → Calculs génériques
-
-## Bénéfices pour l'équipe
-
-1. **Développement rapide** : Nouveaux modes en quelques minutes
-2. **Moins d'erreurs** : Logique centralisée et testée
-3. **Code maintenable** : Séparation claire des responsabilités
-4. **Scalabilité** : Architecture prête pour de nombreux modes
-5. **Réutilisabilité** : Hooks utilisables pour d'autres projets
-
-## Mode Test inclus
-
-Un mode `test` avec seulement 5 pays européens est inclus pour tester rapidement les nouvelles fonctionnalités !
-
----
-
-**TL;DR** : Ajoutez un objet dans `gameModes.js` et votre nouveau mode fonctionne automatiquement dans toute l'application ! 🚀 
+Le mode course apporte une dimension compétitive et rapide au jeu, parfait pour des parties plus courtes et intenses ! 🎮 

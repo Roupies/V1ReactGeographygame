@@ -46,7 +46,7 @@ const DualMapChart = ({
                 // Filter guessed countries for this zone
                 const guessedInThisZone = Array.isArray(guessedCountries) ? 
                     guessedCountries.filter(country =>
-                        zone.regionCodes.includes(country.code)
+                    zone.regionCodes.includes(country.code)
                     ) : [];
 
                 // Create CSS-safe class name

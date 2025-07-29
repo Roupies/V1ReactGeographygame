@@ -12,6 +12,13 @@ export class GeographyRoom extends Room {
     this.setState(new GameState());
     this.state.gameMode = options.gameMode || "europe";
     
+    // Get mode configuration to determine game type
+    const modeConfig = GAME_MODE_CONFIGS[this.state.gameMode];
+    this.isRaceMode = modeConfig?.gameType === 'race';
+    this.scoreThreshold = modeConfig?.scoreThreshold || 50;
+    this.pointsPerCorrect = modeConfig?.pointsPerCorrect || 10;
+    this.pointsPerWrong = modeConfig?.pointsPerWrong || 0;
+    
     this.initializeCountries();
     this.turnTimer = null;
     
@@ -81,14 +88,14 @@ export class GeographyRoom extends Room {
     
     const player = this.state.players.get(client.sessionId);
     if (player) {
-      this.state.players.delete(client.sessionId);
-      
+    this.state.players.delete(client.sessionId);
+    
       // Notify other players
       this.broadcast("playerLeft", {
         playerName: player.name,
         message: `${player.name} a quitté le jeu`
       });
-      
+    
       // If game was in progress, end it
       if (this.state.gameStarted && !this.state.gameEnded) {
         this.endGame(`${player.name} a quitté le jeu`);
@@ -106,13 +113,13 @@ export class GeographyRoom extends Room {
   onPlayerReady(client, message) {
     const player = this.state.players.get(client.sessionId);
     if (player) {
-      player.isReady = true;
+    player.isReady = true;
       console.log(`${player.name} is ready!`);
-      
+    
       // Check if all players are ready
-      const allReady = Array.from(this.state.players.values()).every(p => p.isReady);
+    const allReady = Array.from(this.state.players.values()).every(p => p.isReady);
       if (allReady && this.state.players.size >= 2) {
-        this.startGame();
+      this.startGame();
       }
     }
   }
@@ -123,18 +130,32 @@ export class GeographyRoom extends Room {
     this.state.gameEnded = false;
     this.state.turnNumber = 1;
     
-    // Set first player's turn
-    const playerIds = Array.from(this.state.players.keys());
-    this.state.currentTurn = playerIds[0];
-    
-    // Get the first player's name
-    const firstPlayer = this.state.players.get(this.state.currentTurn);
-    
-    this.broadcast("gameStarted", {
-      message: "Game started!",
-      firstTurn: this.state.currentTurn,
-      firstPlayer: firstPlayer ? firstPlayer.name : 'Unknown Player'
-    });
+    if (this.isRaceMode) {
+      // Race mode: no turns, everyone can play simultaneously
+      this.state.currentTurn = ""; // No specific turn in race mode
+      
+      this.broadcast("gameStarted", {
+        message: "Course commencée ! Premier à 100 points !",
+        gameType: "race",
+        scoreThreshold: this.scoreThreshold
+      });
+    } else {
+      // Turn-based mode: set first player's turn
+      const playerIds = Array.from(this.state.players.keys());
+      this.state.currentTurn = playerIds[0];
+      
+      // Get the first player's name
+      const firstPlayer = this.state.players.get(this.state.currentTurn);
+      
+      this.broadcast("gameStarted", {
+        message: "Game started!",
+        firstTurn: this.state.currentTurn,
+        firstPlayer: firstPlayer ? firstPlayer.name : 'Unknown Player'
+      });
+      
+      // Start turn timer for turn-based mode
+      this.startTurnTimer();
+    }
     
     this.nextCountry();
   }
@@ -146,8 +167,8 @@ export class GeographyRoom extends Room {
     }
     
     const country = this.state.remainingCountries[0];
-    this.state.currentCountryName = country.name;
-    this.state.currentCountryCode = country.isoCode;
+      this.state.currentCountryName = country.name;
+      this.state.currentCountryCode = country.isoCode;
     
     console.log(`Current country: ${country.name}`);
     
@@ -182,7 +203,12 @@ export class GeographyRoom extends Room {
   
   onPlayerGuess(client, message) {
     const player = this.state.players.get(client.sessionId);
-    if (!player || client.sessionId !== this.state.currentTurn) {
+    if (!player) {
+      return;
+    }
+    
+    // In race mode, anyone can guess. In turn mode, only current player can guess
+    if (!this.isRaceMode && client.sessionId !== this.state.currentTurn) {
       return;
     }
     
@@ -197,7 +223,7 @@ export class GeographyRoom extends Room {
     
     if (isCorrect) {
       // Correct answer
-      player.score += 10;
+      player.score += this.pointsPerCorrect;
       player.correctAnswers++;
       
       // Move country from remaining to guessed
@@ -208,41 +234,67 @@ export class GeographyRoom extends Room {
         playerName: player.name,
         countryName: correctAnswer,
         score: player.score,
-        message: `${player.name} found ${correctAnswer}!`
+        message: `${player.name} a trouvé ${correctAnswer}!`
       });
       
       console.log(`${player.name} found ${correctAnswer}! Score: ${player.score}`);
       
+      // Check for victory in race mode
+      if (this.isRaceMode && player.score >= this.scoreThreshold) {
+        this.endGame(`${player.name} a gagné la course avec ${player.score} points !`);
+        return;
+      }
+      
       // Continue to next country
       this.nextCountry();
+      
+      // In turn-based mode, switch turn after correct answer
+      if (!this.isRaceMode) {
+        this.switchTurn();
+      }
     } else {
       // Wrong answer
       player.totalAttempts++;
       
+      // In race mode, deduct points for wrong answers
+      if (this.isRaceMode && this.pointsPerWrong < 0) {
+        player.score = Math.max(0, player.score + this.pointsPerWrong); // Ensure score doesn't go below 0
+      }
+      
       this.broadcast("wrongAnswer", {
         playerName: player.name,
         guess: guess,
-        message: `${player.name} guessed "${guess}" - wrong!`
+        score: player.score,
+        message: `${player.name} a deviné "${guess}" - incorrect !`
       });
       
       console.log(`${player.name} guessed wrong: ${guess}`);
       
-      // Switch turn after wrong answer
-      this.switchTurn();
+      // In turn-based mode, switch turn after wrong answer
+      if (!this.isRaceMode) {
+        this.switchTurn();
+      }
     }
   }
   
   onPlayerSkip(client, message) {
     const player = this.state.players.get(client.sessionId);
-    if (!player || client.sessionId !== this.state.currentTurn) {
+    if (!player) {
       return;
     }
     
-    console.log(`${player.name} skipped their turn`);
+    // In race mode, anyone can skip. In turn mode, only current player can skip
+    if (!this.isRaceMode && client.sessionId !== this.state.currentTurn) {
+      return;
+    }
+    
+    console.log(`${player.name} skipped${this.isRaceMode ? ' (race mode)' : ' their turn'}`);
     
     this.broadcast("playerSkipped", {
       playerName: player.name,
-      message: `${player.name} skipped their turn`
+      message: this.isRaceMode ? 
+        `${player.name} a passé` : 
+        `${player.name} a passé son tour`
     });
     
     // Remove the current country from remaining countries
@@ -250,9 +302,13 @@ export class GeographyRoom extends Room {
       this.state.remainingCountries.shift();
     }
     
-    // Move to next country and switch turn
+    // Move to next country
     this.nextCountry();
-    this.switchTurn();
+    
+    // In turn-based mode, switch turn after skip
+    if (!this.isRaceMode) {
+      this.switchTurn();
+    }
   }
   
   switchTurn() {
@@ -337,7 +393,7 @@ export class GeographyRoom extends Room {
         playerName: player.name,
         message: message.text,
         timestamp: new Date().toISOString()
-      });
-    }
+    });
   }
+} 
 }

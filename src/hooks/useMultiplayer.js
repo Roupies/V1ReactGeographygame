@@ -227,8 +227,13 @@ export const useMultiplayer = () => {
         
         // Handle gameStarted message (alternative name)
         room.onMessage('gameStarted', (message) => {
-            addMessage('Jeu commencé !', 'success');
-            addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+            if (message.gameType === 'race') {
+                addMessage('🏁 Course commencée ! Premier à 100 points !', 'success');
+                addMessage(`🎯 Objectif: ${message.scoreThreshold} points`, 'info');
+            } else {
+                addMessage('Jeu commencé !', 'success');
+                addMessage(`Tour de ${message.firstPlayer || 'Quelqu\'un'}`, 'info');
+            }
             // Reset gameEnded when game starts
             setGameState(prev => ({
                 ...prev,
@@ -261,12 +266,20 @@ export const useMultiplayer = () => {
         
         // Handle correctAnswer message
         room.onMessage('correctAnswer', (message) => {
-            addMessage(`${message.playerName} a trouvé ${message.countryName} !`, 'success');
+            if (message.score !== undefined) {
+                addMessage(`${message.playerName} a trouvé ${message.countryName} ! (${message.score} pts)`, 'success');
+            } else {
+                addMessage(`${message.playerName} a trouvé ${message.countryName} !`, 'success');
+            }
         });
         
         // Handle wrongAnswer message
         room.onMessage('wrongAnswer', (message) => {
-            addMessage(`${message.playerName} s'est trompé : ${message.guess}`, 'error');
+            if (message.score !== undefined) {
+                addMessage(`${message.playerName} s'est trompé : ${message.guess} (${message.score} pts)`, 'error');
+            } else {
+                addMessage(`${message.playerName} s'est trompé : ${message.guess}`, 'error');
+            }
             setLastAction({ type: 'wrong', player: message.player, guess: message.guess });
         });
         
@@ -553,7 +566,8 @@ export const useMultiplayer = () => {
     }, [room]);
     
     // Computed properties
-    const isMyTurn = playerId === gameState.currentTurn;
+    const isRaceMode = gameState.gameMode === 'europeRace';
+    const isMyTurn = isRaceMode ? gameState.gameStarted && !gameState.gameEnded : (playerId === gameState.currentTurn);
     const currentPlayer = playerId ? gameState.players[playerId] : null;
     const otherPlayers = Object.values(gameState.players).filter(p => p && p.id !== playerId);
     const canStartGame = Object.keys(gameState.players).length === 2 && 
@@ -576,6 +590,7 @@ export const useMultiplayer = () => {
         // Game state
         gameState,
         isMyTurn,
+        isRaceMode,
         canStartGame,
         
         // Messages and actions

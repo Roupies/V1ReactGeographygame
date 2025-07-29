@@ -156,6 +156,15 @@ export const GAME_MODE_CONFIGS = {
         name: 'europe',
         idProperty: 'isoCode'
     },
+    europeRace: {
+        entities: EUROPEAN_COUNTRIES,
+        name: 'europeRace',
+        idProperty: 'isoCode',
+        gameType: 'race',
+        scoreThreshold: 100,
+        pointsPerCorrect: 10,
+        pointsPerWrong: -2
+    },
     franceComplete: {
         entities: FRENCH_REGIONS,
         name: 'franceComplete',

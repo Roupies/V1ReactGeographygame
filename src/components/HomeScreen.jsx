@@ -30,7 +30,7 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
       <p style={{
         color: '#ccc',
         fontSize: '1.2em',
-        textAlign: 'center',
+          textAlign: 'center',
         marginBottom: '60px',
         maxWidth: '600px'
       }}>
@@ -42,86 +42,86 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
         display: 'flex',
         gap: '30px',
         flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
-      }}>
+        }}>
         {/* Solo Mode Button */}
-        <button
+              <button
           onClick={() => onSelectMode('solo')}
-          style={{
+                style={{
             padding: '20px 40px',
             fontSize: '1.3em',
-            border: 'none',
+                  border: 'none',
             borderRadius: '12px',
             backgroundColor: '#4169E1',
             background: 'linear-gradient(45deg, #4169E1, #5a7bff)',
-            color: 'white',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
+                  color: 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
             minHeight: '80px',
             minWidth: '200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 4px 15px rgba(65, 105, 225, 0.3)'
-          }}
-          onMouseOver={(e) => {
+                }}
+                onMouseOver={(e) => {
             e.target.style.transform = 'translateY(-3px)';
             e.target.style.boxShadow = '0 8px 25px rgba(65, 105, 225, 0.5)';
-            e.target.style.filter = 'brightness(1.1)';
-          }}
-          onMouseOut={(e) => {
+                    e.target.style.filter = 'brightness(1.1)';
+                }}
+                onMouseOut={(e) => {
             e.target.style.transform = 'translateY(0)';
             e.target.style.boxShadow = '0 4px 15px rgba(65, 105, 225, 0.3)';
-            e.target.style.filter = 'brightness(1)';
-          }}
-        >
+                    e.target.style.filter = 'brightness(1)';
+                }}
+              >
           <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
             🎯
-          </span>
+                  </span>
           Mode Solo
-        </button>
+              </button>
 
         {/* Multiplayer Mode Button */}
-        <button
+          <button
           onClick={() => onSelectMultiplayer('multiplayer')}
-          style={{
+            style={{
             padding: '20px 40px',
             fontSize: '1.3em',
-            border: 'none',
+              border: 'none',
             borderRadius: '12px',
-            backgroundColor: '#28a745',
+              backgroundColor: '#28a745',
             background: 'linear-gradient(45deg, #28a745, #32c252)',
-            color: 'white',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
+              color: 'white',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
             minHeight: '80px',
             minWidth: '200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)'
-          }}
-          onMouseOver={(e) => {
+            }}
+            onMouseOver={(e) => {
             e.target.style.transform = 'translateY(-3px)';
             e.target.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.5)';
             e.target.style.filter = 'brightness(1.1)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.transform = 'translateY(0)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
             e.target.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
             e.target.style.filter = 'brightness(1)';
-          }}
-        >
+            }}
+          >
           <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
             🎮
           </span>
           Mode Multijoueur
-        </button>
+          </button>
       </div>
 
       {/* Footer note */}

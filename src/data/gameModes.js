@@ -101,6 +101,34 @@ const MULTIPLAYER_MODE_CONFIGS = {
       theme: 'multiplayer-europe'
     }
   },
+
+  // NEW: First to 100 points race mode for Europe
+  europeRace: {
+    ...MODE_CONFIGS.europe,
+    label: "Course Europe - Premier à 100 pts",
+    scoreType: 'points',
+    victoryCondition: 'score_threshold',
+    scoreThreshold: 100,
+    gameType: 'race', // NEW: indicates no-turn gameplay
+    pointsPerCorrect: 10,
+    pointsPerWrong: -2,
+    feedbackMessages: {
+      ...MODE_CONFIGS.europe.feedbackMessages,
+      victory: 'Victoire ! Vous avez atteint 100 points !',
+      playerFound: 'a trouvé',
+      playerSkipped: 'a passé',
+      gameWon: 'a gagné la course avec 100 points !'
+    },
+    // UI Customization for race mode
+    primaryColor: '#ff6b35',
+    secondaryColor: '#ff8c42',
+    icon: '🏁',
+    uiCustomization: {
+      buttonGradient: 'linear-gradient(45deg, #ff6b35, #ff8c42)',
+      hoverEffect: 'pulse',
+      theme: 'multiplayer-race'
+    }
+  },
   
   franceComplete: {
     ...MODE_CONFIGS.franceComplete,

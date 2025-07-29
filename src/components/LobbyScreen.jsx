@@ -5,7 +5,7 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
   const [mode, setMode] = useState('create');
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
-  
+
   const handleCreateRoom = (e) => {
     e.preventDefault();
     if (playerName.trim()) {
@@ -121,8 +121,8 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
         maxWidth: '400px'
       }}>
         <div>
-          <label style={{
-            color: 'white',
+          <label style={{ 
+            color: 'white', 
             fontSize: '1.1em',
             marginBottom: '10px',
             display: 'block'
@@ -147,8 +147,8 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
 
         {mode === 'join' && (
           <div>
-            <label style={{
-              color: 'white',
+            <label style={{ 
+              color: 'white', 
               fontSize: '1.1em',
               marginBottom: '10px',
               display: 'block'
@@ -190,15 +190,15 @@ export default function LobbyScreen({ onCreateRoom, onJoinRoom, onBack, isConnec
         </button>
 
         {connectionError && (
-          <div style={{
+      <div style={{
             color: '#dc3545',
             backgroundColor: '#f8d7da',
             padding: '10px',
             borderRadius: '5px',
-            textAlign: 'center'
-          }}>
+        textAlign: 'center'
+      }}>
             Erreur : {connectionError}
-          </div>
+      </div>
         )}
       </form>
     </div>

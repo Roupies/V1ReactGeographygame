@@ -399,62 +399,62 @@ const MapChart = ({
             )}
             
             {!loading && !error && geoData && (
-                <ComposableMap 
-                    projection="geoAzimuthalEqualArea" 
-                    projectionConfig={currentProjection}
-                    style={{
-                        background: 'transparent',
-                        width: '100%',
-                        height: '100%'
-                    }}
-                >
-                    {/* Geographic regions rendering */}
+            <ComposableMap 
+                projection="geoAzimuthalEqualArea" 
+                projectionConfig={currentProjection}
+                style={{
+                    background: 'transparent',
+                    width: '100%',
+                    height: '100%'
+                }}
+            >
+                {/* Geographic regions rendering */}
                     <Geographies geography={geoData}>
-                        {({ geographies }) =>
-                            geographies.map(geo => (
-                                <Geography
-                                    key={geo.rsmKey} 
-                                    geography={geo}
-                                    style={getCountryStyle(geo)}
-                                />
-                            ))
-                        }
-                    </Geographies>
+                    {({ geographies }) =>
+                        geographies.map(geo => (
+                            <Geography
+                                key={geo.rsmKey} 
+                                geography={geo}
+                                style={getCountryStyle(geo)}
+                            />
+                        ))
+                    }
+                </Geographies>
 
-                    {/* Markers for micro-states - only shown in Europe mode */}
-                    {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
-                        // Check game state for this micro-state
-                        const isCurrent = currentCountry && 
-                            String(currentCountry.code || currentCountry.isoCode) === entityId;
+                {/* Markers for micro-states - only shown in Europe mode */}
+                {isEuropeMode && Object.entries(MARKER_COORDINATES).map(([entityId, coordinates]) => {
+                    // Check game state for this micro-state
+                    const isCurrent = currentCountry && 
+                        String(currentCountry.code || currentCountry.isoCode) === entityId;
                         const isGuessed = Array.isArray(guessedCountries) && guessedCountries.some(c => 
-                            String(c.code || c.isoCode) === entityId
-                        );
-                        
-                        // Only show marker if it's the current entity or has been guessed
-                        // This prevents showing all micro-states at once (would be confusing)
-                        if (!isCurrent && !isGuessed) {
-                            return null;
-                        }
-                        
-                        const markerStyle = getMarkerStyle(entityId);
-                        return (
-                            <Marker key={entityId} coordinates={coordinates}>
-                                {/* Simple circle marker with drop shadow for visibility */}
-                                <circle 
-                                    cx="0"
-                                    cy="0"
-                                    r={markerStyle.radius}
-                                    fill={markerStyle.fill}
-                                    stroke={markerStyle.stroke}
-                                    strokeWidth={markerStyle.strokeWidth}
-                                    style={{
-                                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' // Shadow for better visibility
-                                    }}
-                                />
-                            </Marker>
-                        );
-                    })}
-                </ComposableMap>
+                        String(c.code || c.isoCode) === entityId
+                    );
+                    
+                    // Only show marker if it's the current entity or has been guessed
+                    // This prevents showing all micro-states at once (would be confusing)
+                    if (!isCurrent && !isGuessed) {
+                        return null;
+                    }
+                    
+                    const markerStyle = getMarkerStyle(entityId);
+                    return (
+                        <Marker key={entityId} coordinates={coordinates}>
+                            {/* Simple circle marker with drop shadow for visibility */}
+                            <circle 
+                                cx="0"
+                                cy="0"
+                                r={markerStyle.radius}
+                                fill={markerStyle.fill}
+                                stroke={markerStyle.stroke}
+                                strokeWidth={markerStyle.strokeWidth}
+                                style={{
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' // Shadow for better visibility
+                                }}
+                            />
+                        </Marker>
+                    );
+                })}
+            </ComposableMap>
             )}
         </div>
     );
