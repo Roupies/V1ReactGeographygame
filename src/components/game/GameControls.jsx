@@ -144,24 +144,27 @@ const GameControls = ({
                     Indice
                 </button>
                 
-                <button 
-                    onClick={handleSkip}
-                    disabled={!currentCountry}
-                    style={{
-                        backgroundColor: theme?.colors?.buttonSkip || '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '20px',
-                        padding: '10px 20px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    Passer
-                </button>
+                {/* Skip button - only show if enabled in game config */}
+                {gameConfig?.showSkip !== false && (
+                    <button 
+                        onClick={handleSkip}
+                        disabled={!currentCountry}
+                        style={{
+                            backgroundColor: theme?.colors?.buttonSkip || '#6c757d',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '20px',
+                            padding: '10px 20px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        Passer
+                    </button>
+                )}
             </div>
 
             {/* Mobile input for responsive design */}

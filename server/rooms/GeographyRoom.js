@@ -177,7 +177,10 @@ export class GeographyRoom extends Room {
       countryName: country.name
     });
     
-    this.startTurnTimer();
+    // Only start turn timer in turn-based mode
+    if (!this.isRaceMode) {
+      this.startTurnTimer();
+    }
   }
   
   startTurnTimer() {
@@ -283,18 +286,22 @@ export class GeographyRoom extends Room {
       return;
     }
     
-    // In race mode, anyone can skip. In turn mode, only current player can skip
-    if (!this.isRaceMode && client.sessionId !== this.state.currentTurn) {
+    // Skip is not allowed in race mode
+    if (this.isRaceMode) {
+      console.log(`${player.name} tried to skip in race mode - rejected`);
       return;
     }
     
-    console.log(`${player.name} skipped${this.isRaceMode ? ' (race mode)' : ' their turn'}`);
+    // In turn mode, only current player can skip
+    if (client.sessionId !== this.state.currentTurn) {
+      return;
+    }
+    
+    console.log(`${player.name} skipped their turn`);
     
     this.broadcast("playerSkipped", {
       playerName: player.name,
-      message: this.isRaceMode ? 
-        `${player.name} a passé` : 
-        `${player.name} a passé son tour`
+      message: `${player.name} a passé son tour`
     });
     
     // Remove the current country from remaining countries
@@ -305,10 +312,8 @@ export class GeographyRoom extends Room {
     // Move to next country
     this.nextCountry();
     
-    // In turn-based mode, switch turn after skip
-    if (!this.isRaceMode) {
-      this.switchTurn();
-    }
+    // Switch turn after skip
+    this.switchTurn();
   }
   
   switchTurn() {

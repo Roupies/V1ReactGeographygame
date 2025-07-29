@@ -102,15 +102,16 @@ export const useMultiplayer = () => {
                         if (typeof state.guessedCountries.forEach === 'function') {
                             state.guessedCountries.forEach(item => {
                                 // Deep clone the Colyseus object to a plain JS object
-                                // For French regions, use 'code', for Europe use 'isoCode'
+                                // Country schema only has isoCode, not code
                                 const plainObject = {
                                     name: item.name,
-                                    code: item.code || item.isoCode, // Use code for French regions, isoCode for Europe
-                                    isoCode: item.isoCode || item.code // Fallback
+                                    isoCode: item.isoCode,
+                                    code: item.isoCode // Use isoCode as code for compatibility
                                 };
                                 arr.push(plainObject);
                             });
                         }
+                        
                         return arr;
                     } catch (e) {
                         console.error('Error processing guessedCountries:', e);

@@ -112,6 +112,7 @@ const MULTIPLAYER_MODE_CONFIGS = {
     gameType: 'race', // NEW: indicates no-turn gameplay
     pointsPerCorrect: 10,
     pointsPerWrong: -2,
+    showSkip: false, // Disable skip button in race mode
     feedbackMessages: {
       ...MODE_CONFIGS.europe.feedbackMessages,
       victory: 'Victoire ! Vous avez atteint 100 points !',
