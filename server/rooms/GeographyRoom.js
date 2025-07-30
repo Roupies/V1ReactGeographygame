@@ -19,12 +19,23 @@ export class GeographyRoom extends Room {
     this.pointsPerCorrect = modeConfig?.pointsPerCorrect || 10;
     this.pointsPerWrong = modeConfig?.pointsPerWrong || 0;
     
+    // ✅ NOUVEAU : Configuration timer centralisée depuis GameManager
+    this.timerConfig = {
+      type: modeConfig?.timerType || 'countdown',
+      seconds: modeConfig?.timerSeconds || 240,
+      display: modeConfig?.timerDisplay !== false,
+      autoStart: modeConfig?.timerAutoStart !== false,
+      syncServer: modeConfig?.timerSyncServer === true
+    };
+    
     this.initializeCountries();
     this.turnTimer = null;
+    this.gameTimer = null; // Timer global du jeu
     
     this.onMessage("ready", this.onPlayerReady.bind(this));
     this.onMessage("guess", this.onPlayerGuess.bind(this));
     this.onMessage("skip", this.onPlayerSkip.bind(this));
+    this.onMessage("hint", this.onPlayerHint.bind(this)); // ✅ NOUVEAU : Gestionnaire pour les indices
     this.onMessage("restart", this.onRestartGame.bind(this));
     this.onMessage("chat", this.onChatMessage.bind(this));
   }
@@ -130,6 +141,14 @@ export class GeographyRoom extends Room {
     this.state.gameEnded = false;
     this.state.turnNumber = 1;
     
+    // ✅ NOUVEAU : Initialiser timer global basé sur configuration
+    if (this.timerConfig.display && this.timerConfig.syncServer) {
+      this.state.gameTimeLeft = this.timerConfig.seconds;
+      if (this.timerConfig.autoStart) {
+        this.startGameTimer();
+      }
+    }
+    
     if (this.isRaceMode) {
       // Race mode: no turns, everyone can play simultaneously
       this.state.currentTurn = ""; // No specific turn in race mode
@@ -137,7 +156,9 @@ export class GeographyRoom extends Room {
       this.broadcast("gameStarted", {
         message: "Course commencée ! Premier à 100 points !",
         gameType: "race",
-        scoreThreshold: this.scoreThreshold
+        scoreThreshold: this.scoreThreshold,
+        timerSeconds: this.timerConfig.seconds,
+        timerEnabled: this.timerConfig.display
       });
     } else {
       // Turn-based mode: set first player's turn
@@ -316,6 +337,31 @@ export class GeographyRoom extends Room {
     this.switchTurn();
   }
   
+  // ✅ NOUVEAU : Gestionnaire pour les indices
+  onPlayerHint(client, message) {
+    const player = this.state.players.get(client.sessionId);
+    if (!player) {
+      return;
+    }
+    
+    // Vérifier s'il y a un pays actuel
+    if (!this.state.currentCountryName) {
+      return;
+    }
+    
+    // Générer l'indice (première lettre du pays)
+    const hint = this.state.currentCountryName.charAt(0).toUpperCase();
+    
+    // Diffuser l'indice à tous les joueurs
+    this.broadcast("hintGiven", {
+      playerName: player.name,
+      hint: hint,
+      message: `${player.name} a demandé un indice : ${hint}...`
+    });
+    
+    console.log(`${player.name} asked for hint: ${hint}...`);
+  }
+  
   switchTurn() {
     if (this.turnTimer) {
       clearInterval(this.turnTimer);
@@ -398,7 +444,76 @@ export class GeographyRoom extends Room {
         playerName: player.name,
         message: message.text,
         timestamp: new Date().toISOString()
-    });
+      });
+    }
   }
-} 
+
+  // ✅ NOUVEAU : Méthodes de gestion du timer global basées sur configuration
+  startGameTimer() {
+    if (!this.timerConfig.display || !this.timerConfig.syncServer) {
+      return; // Ne pas démarrer si pas configuré pour affichage ou sync serveur
+    }
+
+    console.log(`🕐 Démarrage timer global: ${this.timerConfig.seconds}s (mode: ${this.state.gameMode})`);
+    
+    if (this.gameTimer) {
+      clearInterval(this.gameTimer);
+    }
+    
+    this.gameTimer = setInterval(() => {
+      if (this.state.gameTimeLeft > 0) {
+        this.state.gameTimeLeft--;
+        
+        // Diffuser la mise à jour du timer si synchronisé
+        this.broadcast("gameTimeUpdate", {
+          timeLeft: this.state.gameTimeLeft
+        });
+        
+        if (this.state.gameTimeLeft <= 0) {
+          this.onGameTimeout();
+        }
+      }
+    }, 1000);
+  }
+
+  onGameTimeout() {
+    console.log("⏰ Timer global expiré ! Fin de partie.");
+    
+    if (this.isRaceMode) {
+      // Mode course : déterminer le gagnant par score
+      let winner = null;
+      let highestScore = -1;
+      
+      this.state.players.forEach(player => {
+        if (player.score > highestScore) {
+          highestScore = player.score;
+          winner = player;
+        }
+      });
+      
+      if (winner) {
+        this.endGame(`⏰ Temps écoulé ! ${winner.name} gagne avec ${winner.score} points !`);
+      } else {
+        this.endGame("⏰ Temps écoulé ! Match nul !");
+      }
+    } else {
+      // Mode tour par tour : fin de partie par temps
+      this.endGame("⏰ Temps écoulé ! Partie terminée.");
+    }
+  }
+
+  // Nettoyage des timers
+  onDispose() {
+    console.log("GeographyRoom disposing...");
+    
+    if (this.turnTimer) {
+      clearInterval(this.turnTimer);
+      this.turnTimer = null;
+    }
+    
+    if (this.gameTimer) {
+      clearInterval(this.gameTimer);
+      this.gameTimer = null;
+    }
+  }
 }

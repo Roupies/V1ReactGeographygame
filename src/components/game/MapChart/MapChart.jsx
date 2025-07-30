@@ -4,7 +4,59 @@
 import React, { useState, useEffect, useMemo } from "react";
 // Importez uniquement ComposableMap, Geographies, Geography, Marker
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"; 
-import { EUROPEAN_COUNTRIES } from '../../../../shared/data/entities.js';
+// ✅ CORRIGÉ : Import via GameManager au lieu d'import direct
+import gameManager from '../../../services/GameManager';
+
+// Cache mobile-friendly avec gestion mémoire
+const geoJSONCache = new Map();
+const loadingPromises = new Map();
+const MAX_CACHE_SIZE = 3; // Limiter à 3 fichiers en cache sur mobile
+
+// Rendre le cache global accessible pour le préchargement
+if (typeof window !== 'undefined') {
+    window.geoJSONCache = geoJSONCache;
+}
+
+// Fonction pour nettoyer le cache si nécessaire
+const cleanCache = () => {
+    if (geoJSONCache.size > MAX_CACHE_SIZE) {
+        const firstKey = geoJSONCache.keys().next().value;
+        geoJSONCache.delete(firstKey);
+        console.log('🗑️ Cache cleaned (mobile optimization)');
+    }
+};
+
+// Fetch avec retry et timeout adapté mobile
+const fetchWithRetry = async (url, retries = 2) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const controller = new AbortController();
+            const timeout = attempt === 0 ? 8000 : 15000; // Timeout plus long sur retry
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            const response = await fetch(url, {
+                signal: controller.signal,
+                headers: {
+                    'Cache-Control': 'max-age=1800' // 30 min sur mobile
+                }
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (attempt === retries) throw error;
+            
+            // Attendre plus longtemps entre les retries sur mobile
+            await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+            console.warn(`📱 Retry ${attempt + 1}/${retries} for ${url}`);
+        }
+    }
+};
 
 // European subregions for potential future filtering
 const EUROPEAN_SUBREGIONS = [
@@ -49,7 +101,10 @@ const MapChart = ({
     geoJsonPath,         // Path to GeoJSON data file
     geoIdProperty = 'ISO_A3',  // Property name for matching entities (ISO_A3 for countries, code for regions)
     projectionConfig,    // Map projection settings from game configuration
-    theme               // Theme colors
+    theme,              // Theme colors
+    gameConfig,         // ✅ AJOUTÉ : Configuration de jeu depuis GameManager
+    selectedMode,       // ✅ AJOUTÉ : Mode sélectionné pour GameManager
+    isMultiplayer       // ✅ AJOUTÉ : Mode multijoueur pour GameManager
 }) => { 
     // State for managing responsive map projection
     const [currentProjection, setCurrentProjection] = useState(projectionConfig || DEFAULT_PROJECTION);
@@ -57,26 +112,49 @@ const MapChart = ({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Load GeoJSON data
+    // Load GeoJSON data with mobile-optimized cache
     useEffect(() => {
-        console.log('MapChart loading GeoJSON from:', geoJsonPath);
+        console.log('📱 Mobile-optimized GeoJSON loading:', geoJsonPath);
         setLoading(true);
         setError(null);
         
-        fetch(geoJsonPath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+        // Check cache first
+        if (geoJSONCache.has(geoJsonPath)) {
+            console.log('📦 From cache:', geoJsonPath);
+            setGeoData(geoJSONCache.get(geoJsonPath));
+            setLoading(false);
+            return;
+        }
+        
+        // Check if already loading
+        if (loadingPromises.has(geoJsonPath)) {
+            console.log('⏳ Already loading:', geoJsonPath);
+            loadingPromises.get(geoJsonPath)
+                .then(data => {
+                    setGeoData(data);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    setError(err.message);
+                    setLoading(false);
+                });
+            return;
+        }
+        
+        // Load with timeout and retry for mobile networks
+        const loadingPromise = fetchWithRetry(geoJsonPath);
+        loadingPromises.set(geoJsonPath, loadingPromise);
+        
+        loadingPromise
             .then(data => {
-                console.log('GeoJSON loaded successfully:', data);
+                cleanCache(); // Nettoyer si nécessaire
+                geoJSONCache.set(geoJsonPath, data);
+                loadingPromises.delete(geoJsonPath);
                 setGeoData(data);
                 setLoading(false);
             })
             .catch(err => {
-                console.error('Error loading GeoJSON:', err);
+                loadingPromises.delete(geoJsonPath);
                 setError(err.message);
                 setLoading(false);
             });
@@ -89,16 +167,51 @@ const MapChart = ({
             }
     }, [projectionConfig]);
 
-    // Memoize European country codes to prevent recalculation
+    // ✅ CORRIGÉ : Utilise GameManager au lieu d'import direct
     const europeanCountryCodes = useMemo(() => {
-        const codes = EUROPEAN_COUNTRIES.map(c => String(c.isoCode));
-        // Ajouter les variantes possibles pour le Kosovo
-        codes.push('XKX', 'KOS', 'XK', 'KX', '-99'); // Différents codes possibles pour le Kosovo
+        if (!selectedMode || !gameConfig) return [];
+        
+        const entities = gameManager.getEntities(selectedMode, isMultiplayer);
+        const codes = entities.map(c => String(c.isoCode));
+        
+        // Ajouter les variantes possibles pour le Kosovo si on est en mode Europe
+        if (selectedMode.includes('europe')) {
+            codes.push('XKX', 'KOS', 'XK', 'KX', '-99'); // Différents codes possibles pour le Kosovo
+        }
         return codes;
-    }, []);
+    }, [selectedMode, gameConfig, isMultiplayer]);
     
-    // Determine if we're in Europe mode (for micro-states markers display)
-    const isEuropeMode = geoIdProperty === 'ISO_A3';
+    // ✅ CORRIGÉ : Determine if we're in Europe mode via GameManager
+    const isEuropeMode = selectedMode?.includes('europe') && geoIdProperty === 'ISO_A3';
+
+    // Debug info for mobile optimizations (only in development)
+    const debugInfo = process.env.NODE_ENV === 'development' && (
+        <div style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            zIndex: 1001,
+            fontFamily: 'monospace',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,255,255,0.2)'
+        }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#4CAF50' }}>
+                🚀 Mobile Optimizations
+            </div>
+            <div>📦 Cache: {geoJSONCache.size}/{MAX_CACHE_SIZE}</div>
+            <div>⏳ Loading: {loadingPromises.size}</div>
+            <div>📱 Mobile: {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '✅ Yes' : '❌ No'}</div>
+            <div style={{ marginTop: '8px', fontSize: '11px', color: '#FFD700' }}>
+                {geoJsonPath.includes('europe') ? '🗺️ Europe Map' : 
+                 geoJsonPath.includes('france') ? '🇫🇷 France Map' : '🗺️ Other Map'}
+            </div>
+        </div>
+    );
 
     // Memoize style function to prevent recreation on every render
     const getCountryStyle = useMemo(() => (geo) => {
@@ -364,10 +477,40 @@ const MapChart = ({
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    color: '#666',
-                    fontSize: '14px'
+                    zIndex: 1000,
+                    background: 'rgba(255,255,255,0.95)',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    minWidth: '120px',
+                    textAlign: 'center'
                 }}>
-                    Chargement de la carte...
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '3px solid #f3f3f3',
+                        borderTop: '3px solid #3498db',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 12px'
+                    }}></div>
+                    <div style={{
+                        fontSize: '14px',
+                        color: '#666',
+                        fontWeight: '500'
+                    }}>
+                        Chargement...
+                    </div>
+                    <div style={{
+                        fontSize: '12px',
+                        color: '#999',
+                        marginTop: '4px'
+                    }}>
+                        {geoJsonPath.includes('europe') ? 'Carte Europe' : 
+                         geoJsonPath.includes('france') ? 'Carte France' : 'Carte'}
+                    </div>
                 </div>
             )}
             
@@ -443,6 +586,7 @@ const MapChart = ({
                 })}
             </ComposableMap>
             )}
+            {debugInfo}
         </div>
     );
 };

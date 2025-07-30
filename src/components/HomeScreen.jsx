@@ -11,28 +11,30 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',                    // Full viewport height
-      background: '#183040',              // Dark blue background
+      background: '#F8F9FA',              // Light background - new charte graphique
       padding: '20px',
       boxSizing: 'border-box'
     }}>
       {/* Main title with responsive typography */}
       <h1 style={{ 
-        color: 'white', 
+        color: '#495057',                 // Dark gray text - new charte
         marginBottom: '40px',
         fontSize: window.innerWidth <= 768 ? '2em' : '3em',  // Smaller text on mobile
         textAlign: 'center',
-        padding: '0 20px'                 // Horizontal padding for mobile
+        padding: '0 20px',                // Horizontal padding for mobile
+        fontWeight: '600'                 // Semi-bold for better hierarchy
       }}>
         Mini jeu Géographie
       </h1>
       
       {/* Subtitle */}
       <p style={{
-        color: '#ccc',
+        color: '#6C757D',                 // Medium gray - new charte
         fontSize: '1.2em',
-          textAlign: 'center',
+        textAlign: 'center',
         marginBottom: '60px',
-        maxWidth: '600px'
+        maxWidth: '600px',
+        lineHeight: '1.6'
       }}>
         Testez vos connaissances géographiques !
       </p>
@@ -42,99 +44,99 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
         display: 'flex',
         gap: '30px',
         flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
-        }}>
+      }}>
         {/* Solo Mode Button */}
-              <button
+        <button
           onClick={() => onSelectMode('solo')}
-                style={{
+          style={{
             padding: '20px 40px',
             fontSize: '1.3em',
-                  border: 'none',
-            borderRadius: '12px',
-            backgroundColor: '#4169E1',
-            background: 'linear-gradient(45deg, #4169E1, #5a7bff)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+            border: 'none',
+            borderRadius: '16px',         // More rounded corners - new charte
+            backgroundColor: '#E9ECEF',   // Light gray background - new charte
+            color: '#495057',             // Dark gray text - new charte
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
             minHeight: '80px',
             minWidth: '200px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 4px 15px rgba(65, 105, 225, 0.3)'
-                }}
-                onMouseOver={(e) => {
-            e.target.style.transform = 'translateY(-3px)';
-            e.target.style.boxShadow = '0 8px 25px rgba(65, 105, 225, 0.5)';
-                    e.target.style.filter = 'brightness(1.1)';
-                }}
-                onMouseOut={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 15px rgba(65, 105, 225, 0.3)';
-                    e.target.style.filter = 'brightness(1)';
-                }}
-              >
-          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
-            🎯
-                  </span>
-          Mode Solo
-              </button>
-
-        {/* Multiplayer Mode Button */}
-          <button
-          onClick={() => onSelectMultiplayer('multiplayer')}
-            style={{
-            padding: '20px 40px',
-            fontSize: '1.3em',
-              border: 'none',
-            borderRadius: '12px',
-              backgroundColor: '#28a745',
-            background: 'linear-gradient(45deg, #28a745, #32c252)',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            minHeight: '80px',
-            minWidth: '200px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)'
-            }}
-            onMouseOver={(e) => {
-            e.target.style.transform = 'translateY(-3px)';
-            e.target.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.5)';
-            e.target.style.filter = 'brightness(1.1)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
-            e.target.style.filter = 'brightness(1)';
-            }}
-          >
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',  // Subtle shadow - new charte
+            fontWeight: '500'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+            e.target.style.backgroundColor = '#DEE2E6';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+            e.target.style.backgroundColor = '#E9ECEF';
+          }}
+        >
+          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
+            🎯
+          </span>
+          Mode Solo
+        </button>
+
+        {/* Multiplayer Mode Button */}
+        <button
+          onClick={() => onSelectMultiplayer('multiplayer')}
+          style={{
+            padding: '20px 40px',
+            fontSize: '1.3em',
+            border: 'none',
+            borderRadius: '16px',         // More rounded corners - new charte
+            backgroundColor: '#6B9080',   // Sage green - new charte (primary button)
+            color: 'white',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            minHeight: '80px',
+            minWidth: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(107, 144, 128, 0.2)',  // Subtle shadow - new charte
+            fontWeight: '500'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 4px 16px rgba(107, 144, 128, 0.3)';
+            e.target.style.backgroundColor = '#5A7A6B';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 2px 8px rgba(107, 144, 128, 0.2)';
+            e.target.style.backgroundColor = '#6B9080';
+          }}
+        >
           <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
             🎮
           </span>
           Mode Multijoueur
-          </button>
+        </button>
       </div>
 
       {/* Footer note */}
       <p style={{
-        color: '#aaa',
+        color: '#6C757D',                 // Medium gray - new charte
         marginTop: '60px',
         textAlign: 'center',
         fontSize: '1em',
         maxWidth: '600px',
         lineHeight: '1.6'
       }}>
-        <strong>Mode Solo :</strong> Jouez seul et améliorez vos connaissances<br/>
-        <strong>Mode Multijoueur :</strong> Jouez à 2 avec tours alternés en temps réel !
+        <strong style={{ color: '#495057' }}>Mode Solo :</strong> Jouez seul et améliorez vos connaissances<br/>
+        <strong style={{ color: '#495057' }}>Mode Multijoueur :</strong> Jouez à 2 avec tours alternés en temps réel !
       </p>
     </div>
   );

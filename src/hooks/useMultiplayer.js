@@ -51,7 +51,8 @@ export const useMultiplayer = () => {
         gameMode: 'europe',
         totalCountries: 0,
         turnNumber: 1,
-        maxTurns: 20
+        maxTurns: 20,
+        gameTimeLeft: 240 // ✅ TODO : À terme, récupérer depuis GameManager côté serveur
     });
     
     // Game messages and feedback
@@ -310,9 +311,22 @@ export const useMultiplayer = () => {
             }));
         });
         
+        // ✅ NOUVEAU : Handle game time update for synchronized timer
+        room.onMessage('gameTimeUpdate', (message) => {
+            setGameState(prev => ({
+                ...prev,
+                gameTimeLeft: message.timeLeft
+            }));
+        });
+        
         // Handle chatMessage message
         room.onMessage('chatMessage', (message) => {
             addMessage(`${message.playerName}: ${message.message}`, 'chat');
+        });
+        
+        // ✅ NOUVEAU : Handle hint given
+        room.onMessage('hintGiven', (message) => {
+            addMessage(`💡 ${message.playerName} a demandé un indice : ${message.hint}...`, 'info');
         });
         
         // Handle correct answer

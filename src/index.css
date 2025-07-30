@@ -74,3 +74,22 @@ button:focus-visible {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* Spinner animation for mobile loading */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Optimisations mobile pour les cartes */
+@media (max-width: 768px) {
+  .map-container {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Réduire la complexité des animations sur mobile */
+  .map-geography {
+    transition: fill 0.2s ease-out;
+  }
+}

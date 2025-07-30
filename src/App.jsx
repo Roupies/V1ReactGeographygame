@@ -11,6 +11,7 @@ import { useFocusManagement } from './hooks/useFocusManagement';
 import { useResponsiveProjection } from './hooks/useResponsiveProjection';
 import { useTheme } from './hooks/useTheme';
 import { useMultiplayer } from './hooks/useMultiplayer';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
 import gameManager from './data/gameModes';
 import HomeScreen from './components/HomeScreen';
 import ModeSelectionScreen from './components/ModeSelectionScreen';
@@ -48,6 +49,9 @@ function App() {
     // Multiplayer hook
     const multiplayer = useMultiplayer();
     
+    // Network status for mobile optimization
+    const networkInfo = useNetworkStatus();
+    
     // Get game configuration from GameManager
     const gameConfig = useMemo(() => {
         if (!selectedMode) return null;
@@ -61,7 +65,12 @@ function App() {
     }, [selectedMode, isMultiplayer, multiplayer.gameState.gameMode]);
 
     // Use modular game logic hook with GameManager
-    const gameLogic = useGameLogic(selectedMode, isMultiplayer);
+    // ✅ NOUVEAU : Passer serverTimeLeft pour synchronisation timer multiplayer
+    const gameLogic = useGameLogic(
+        selectedMode, 
+        isMultiplayer, 
+        isMultiplayer ? multiplayer.gameState.gameTimeLeft : null
+    );
 
     // Use specialized focus management hook
     const focusManagement = useFocusManagement(selectedMode, gameLogic.gameEnded);
@@ -80,6 +89,31 @@ function App() {
             setSelectedMode(multiplayer.gameState.gameMode);
         }
     }, [isMultiplayer, multiplayer.gameState.gameMode, selectedMode]);
+
+    // Préchargement conditionnel des fichiers GeoJSON selon le device et la connexion
+    useEffect(() => {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isSlowConnection = networkInfo.isSlow || networkInfo.effectiveType === 'slow-2g' || networkInfo.effectiveType === '2g';
+
+        if (isMobile && !isSlowConnection && networkInfo.isOnline) {
+            // Précharger seulement le fichier le plus utilisé sur mobile
+            const mobilePriorityFile = '/geojson/europe.json';
+            
+            console.log('📱 Mobile preloading:', mobilePriorityFile);
+            fetch(mobilePriorityFile)
+                .then(response => response.json())
+                .then(data => {
+                    // Stocker dans le cache global (accessible depuis MapChart)
+                    if (window.geoJSONCache) {
+                        window.geoJSONCache.set(mobilePriorityFile, data);
+                    }
+                    console.log('✅ Mobile preloaded:', mobilePriorityFile);
+                })
+                .catch(err => console.warn('Mobile preload failed:', err));
+        } else if (isSlowConnection) {
+            console.log('🐌 Slow connection detected - skipping preload');
+        }
+    }, [networkInfo.isOnline, networkInfo.isSlow, networkInfo.effectiveType]);
 
     // Stable goToHome function
     const goToHome = useCallback(() => {
@@ -133,7 +167,32 @@ function App() {
         setSelectedMode(null);
     }, []);
     
-    // Function to go back to multiplayer mode selection from end game modal
+    // Function to handle restart from multiplayer end game modal
+    const handleMultiplayerRestart = useCallback(() => {
+        // ✅ NOUVEAU : Restart intelligent
+        const activePlayers = Object.values(multiplayer.gameState.players).filter(p => p && p.id);
+        const hasEnoughPlayers = activePlayers.length >= 2;
+        
+        if (hasEnoughPlayers && multiplayer.isConnected) {
+            // ✅ Assez de joueurs encore connectés = restart direct
+            console.log('🔄 Restart direct avec', activePlayers.length, 'joueurs');
+            multiplayer.restartGame();
+        } else {
+            // ✅ Pas assez de joueurs = retour au mode selection
+            console.log('⬅️ Retour mode selection (joueurs:', activePlayers.length, ')');
+            setSelectedMode(null);
+            setIsMultiplayer(false);
+            setShowLobby(false);
+            setShowModeSelection(false);
+            setGameType('multiplayer');
+            setShowModeSelection(true);
+            if (multiplayer.isConnected) {
+                multiplayer.leaveRoom();
+            }
+        }
+    }, [multiplayer]);
+    
+    // Legacy function for back compatibility
     const handleBackToMultiplayerMode = useCallback(() => {
         setSelectedMode(null);
         setIsMultiplayer(false);
@@ -207,6 +266,9 @@ function App() {
                 geoIdProperty={gameConfig.geoIdProperty}
                 projectionConfig={projectionConfig}
                 theme={theme}
+                gameConfig={gameConfig} // ✅ AJOUTÉ : Pour GameManager
+                selectedMode={selectedMode} // ✅ AJOUTÉ : Pour GameManager
+                isMultiplayer={isMultiplayer} // ✅ AJOUTÉ : Pour GameManager
             />
         );
     };
@@ -303,6 +365,9 @@ function App() {
                     guessedCountries={isMultiplayer ? (Array.isArray(multiplayer.gameState.guessedCountries) ? multiplayer.gameState.guessedCountries : []) : gameLogic.guessedEntities}
                     gameConfig={gameConfig}
                     theme={theme}
+                    // ✅ NOUVEAU : Timer unifié depuis gameLogic (gère automatiquement solo/multi)
+                    gameTimeLeft={gameLogic.timer.timeLeft}
+                    isMultiplayer={isMultiplayer}
                 />
             )}
 
@@ -420,7 +485,7 @@ function App() {
                 <MultiplayerEndModal
                     lastAction={multiplayer.lastAction}
                     gameState={multiplayer.gameState}
-                    onRestart={handleBackToMultiplayerMode}
+                    onRestart={handleMultiplayerRestart}
                     onLeave={goToHome}
                 />
             )}

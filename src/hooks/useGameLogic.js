@@ -8,10 +8,11 @@ import { useEffect, useCallback } from 'react';
 import { useGameState } from './useGameState';
 import { useGameStatistics } from './useGameStatistics';
 import { useGameActions } from './useGameActions';
-import { useTimer } from './useTimer';
+import { useGameTimer } from './useGameTimer';
 import gameManager from '../data/gameModes';
 
-const GAME_TIME_SECONDS = 180;
+// ❌ SUPPRIMÉ : Valeur hardcodée remplacée par configuration GameManager
+// const GAME_TIME_SECONDS = 240;
 
 /**
  * Main game logic hook - orchestrates all game functionality using GameManager
@@ -19,26 +20,29 @@ const GAME_TIME_SECONDS = 180;
  * @param {boolean} isMultiplayer - Whether in multiplayer mode
  * @returns {Object} Complete game logic interface
  */
-export const useGameLogic = (modeKey, isMultiplayer = false) => {
+export const useGameLogic = (modeKey, isMultiplayer = false, serverTimeLeft = null) => {
     // Get entities from GameManager based on mode
     const entities = modeKey ? gameManager.getEntities(modeKey, isMultiplayer) : [];
     
     // Compose specialized hooks - each with a single responsibility
     const gameState = useGameState(entities);
     const statistics = useGameStatistics();
-    const timer = useTimer(GAME_TIME_SECONDS, gameState.gameEnded);
+    // ✅ NOUVEAU : Timer unifié basé sur configuration GameManager
+    const timer = useGameTimer(modeKey, isMultiplayer, gameState.gameEnded, serverTimeLeft);
     const actions = useGameActions(gameState, statistics, timer, gameManager, modeKey, isMultiplayer);
 
     // Handle timer expiration - single responsibility
     useEffect(() => {
-        if (timer.timeLeft === 0 && !gameState.gameEnded) {
+        if (timer.isExpired && !gameState.gameEnded && timer.config.timerDisplay) {
+            console.log('⏰ Timer expired - ending game (mode:', modeKey, ')');
             gameState.setGameEnded(true);
         }
-    }, [timer.timeLeft, gameState.gameEnded, gameState.setGameEnded]);
+    }, [timer.isExpired, gameState.gameEnded, gameState.setGameEnded, timer.config.timerDisplay, modeKey]);
 
     // Initialize game when mode changes
     useEffect(() => {
         if (modeKey && entities.length > 0) {
+            console.log('🎮 Initializing game for mode:', modeKey);
             gameState.initializeGame();
         }
     }, [modeKey, entities.length, gameState.initializeGame]);
@@ -92,9 +96,10 @@ export const useGameLogic = (modeKey, isMultiplayer = false) => {
         totalEntities: gameState.totalEntities,
         
         // Timer
-        timeLeft: timer.timeLeft,
-        gameTimeSeconds: timer.gameTimeSeconds,
-        formatTime: timer.formatTime,
+        timeLeft: timer?.timeLeft || 0,
+        gameTimeSeconds: timer?.gameTimeSeconds || gameManager.getTimerConfig(modeKey, isMultiplayer).seconds, // ✅ CORRIGÉ : GameManager au lieu de hardcodé
+        formatTime: timer?.formatTime || (() => '00:00'),
+        timer: timer, // ✅ NOUVEAU : Exposer le timer complet pour App.jsx
         
         // Statistics
         totalGuesses: statistics.totalGuesses,

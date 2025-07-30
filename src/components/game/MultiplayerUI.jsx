@@ -18,52 +18,67 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',
-      background: '#183040',
+      background: '#F8F9FA',
       padding: '20px',
-      color: 'white'
+      color: '#495057',
+      boxSizing: 'border-box'
     }}>
-      <h1 style={{ marginBottom: '30px', fontSize: '2.5em' }}>
+      <h1 style={{ 
+        marginBottom: '30px', 
+        fontSize: '2.5em',
+        color: '#495057',
+        fontWeight: '600'
+      }}>
         Salle d'attente
       </h1>
 
       {/* Room ID */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
+        background: '#FFFFFF',
         borderRadius: '15px',
         padding: '20px',
         marginBottom: '30px',
         textAlign: 'center',
-        minWidth: '400px'
+        minWidth: '400px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        border: '1px solid #E9ECEF'
       }}>
-        <h3 style={{ marginBottom: '10px', color: '#28a745' }}>
+        <h3 style={{ marginBottom: '10px', color: '#495057' }}>
           🏠 ID de la Room
         </h3>
         <div style={{
-          background: 'rgba(0, 0, 0, 0.3)',
+          background: '#F8F9FA',
           padding: '15px',
           borderRadius: '10px',
           fontFamily: 'monospace',
           fontSize: '1.2em',
           fontWeight: 'bold',
-          color: '#fff',
-          userSelect: 'all'
+          color: '#212529',
+          userSelect: 'all',
+          border: '1px solid #DEE2E6'
         }}>
           {roomId || 'Chargement...'}
         </div>
-        <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#ccc' }}>
+        <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#6C757D' }}>
           {roomId ? 'Partagez cet ID avec votre adversaire' : 'Connexion en cours...'}
         </p>
       </div>
 
       {/* Players list */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
+        background: '#FFFFFF',
         borderRadius: '20px',
         padding: '30px',
         marginBottom: '30px',
-        minWidth: '400px'
+        minWidth: '400px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        border: '1px solid #E9ECEF'
       }}>
-        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
+        <h2 style={{ 
+          marginBottom: '20px', 
+          textAlign: 'center',
+          color: '#495057'
+        }}>
           Joueurs ({players.length}/2)
         </h2>
         {players.map(player => (
@@ -72,16 +87,20 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '15px',
-            background: player.id === currentPlayer?.id ? 'rgba(40, 167, 69, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+            background: player.id === currentPlayer?.id ? '#E8F5E8' : '#F8F9FA',
             borderRadius: '10px',
             marginBottom: '10px',
-            border: player.id === currentPlayer?.id ? '2px solid #28a745' : 'none'
+            border: player.id === currentPlayer?.id ? '2px solid #28a745' : '1px solid #DEE2E6'
           }}>
-            <span style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
+            <span style={{ 
+              fontWeight: 'bold', 
+              fontSize: '1.1em',
+              color: '#495057'
+            }}>
               {player.name} {player.id === currentPlayer?.id && '(Vous)'}
             </span>
             <span style={{
-              color: player.isReady ? '#28a745' : '#ffc107',
+              color: player.isReady ? '#28a745' : '#6C757D',
               fontWeight: 'bold'
             }}>
               {player.isReady ? '✅ Prêt' : '⏳ En attente'}
@@ -103,8 +122,12 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
             background: '#28a745',
             color: 'white',
             cursor: 'pointer',
-            marginBottom: '20px'
+            marginBottom: '20px',
+            boxShadow: '0 2px 4px rgba(40, 167, 69, 0.3)',
+            transition: 'all 0.2s ease'
           }}
+          onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+          onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
         >
           Prêt !
         </button>
@@ -117,7 +140,11 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
           fontSize: '1.2em',
           fontWeight: 'bold',
           textAlign: 'center',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          background: '#E8F5E8',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          border: '1px solid #28a745'
         }}>
           🎮 La partie va commencer !
         </div>
@@ -125,10 +152,14 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
 
       {players.length < 2 && (
         <div style={{
-          color: '#ffc107',
+          color: '#6C757D',
           fontSize: '1.1em',
           textAlign: 'center',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          background: '#F8F9FA',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          border: '1px solid #DEE2E6'
         }}>
           En attente d'un autre joueur...
         </div>
@@ -141,10 +172,19 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
           padding: '12px 25px',
           fontSize: '1em',
           borderRadius: '12px',
-          border: 'none',
-          background: '#dc3545',
-          color: 'white',
-          cursor: 'pointer'
+          border: '2px solid #DC3545',
+          background: 'transparent',
+          color: '#DC3545',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = '#DC3545';
+          e.target.style.color = 'white';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'transparent';
+          e.target.style.color = '#DC3545';
         }}
       >
         Quitter la partie

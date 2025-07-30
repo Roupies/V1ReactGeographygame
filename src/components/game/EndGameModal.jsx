@@ -29,7 +29,9 @@ const EndGameModal = ({
     if (!gameEnded) return null;
 
     // Calculate game duration
-    const gameDuration = gameTimeSeconds || (180 - timeLeft);
+    // ✅ CORRIGÉ : Utilise gameTimeSeconds au lieu de valeur hardcodée
+    const defaultTimeSeconds = gameTimeSeconds || 240;
+    const gameDuration = defaultTimeSeconds - timeLeft;
     const finalTime = formatTime ? formatTime(gameDuration) : `${Math.floor(gameDuration / 60)}:${(gameDuration % 60).toString().padStart(2, '0')}`;
     
     // Calculate percentage

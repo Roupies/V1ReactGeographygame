@@ -3,25 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { IoIosTrophy } from "react-icons/io";
 
-const ScoreStars = ({ guessedCountries, gameConfig }) => {
+const ScoreStars = ({ guessedCountries, gameConfig, gameTimeLeft, isMultiplayer }) => {
     const { theme } = useTheme();
     
-    // Timer state
-    const [timeLeft, setTimeLeft] = useState(4 * 60); // 4 minutes in seconds
+    // Timer state - use server timer for multiplayer, game timer for solo
+    // ✅ CORRIGÉ : Utilise gameConfig au lieu de valeur hardcodée
+    const defaultTimeSeconds = gameConfig?.timerSeconds || 240;
+    const [timeLeft, setTimeLeft] = useState(defaultTimeSeconds);
     const [isTimerRunning, setIsTimerRunning] = useState(true);
+    const [timerSynced, setTimerSynced] = useState(!isMultiplayer); // ✅ Track if timer is synced (true for solo)
     
-    // Timer effect
+    // Use server timer for multiplayer, game timer for solo
     useEffect(() => {
-        let interval = null;
-        if (isTimerRunning && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft(prevTime => prevTime - 1);
-            }, 1000);
-        } else if (timeLeft === 0) {
-            setIsTimerRunning(false);
+        if (gameTimeLeft !== undefined) {
+            setTimeLeft(gameTimeLeft);
+            setIsTimerRunning(gameTimeLeft > 0);
+            if (isMultiplayer && !timerSynced) {
+                setTimerSynced(true); // ✅ Mark as synced when first server update arrives
+            }
         }
-        return () => clearInterval(interval);
-    }, [isTimerRunning, timeLeft]);
+    }, [gameTimeLeft, isMultiplayer, timerSynced]);
     
     // Format time as MM:SS
     const formatTime = (seconds) => {
@@ -77,24 +78,26 @@ const ScoreStars = ({ guessedCountries, gameConfig }) => {
             minWidth: '400px'
         }}>
             {/* Timer */}
-                            <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '0px'
-                }}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0px'
+            }}>
                 <div style={{
                     fontSize: '48px',
                     fontWeight: '900',
-                    color: '#1e3241',
+                    color: timeLeft <= 30 ? '#ff4444' : '#1e3241', // Red when time is low
                     fontFamily: 'Arial, sans-serif',
                     transition: 'all 0.3s ease',
                     letterSpacing: '-3px',
                     textAlign: 'center',
                     lineHeight: '1',
-                    width: 'fit-content'
+                    width: 'fit-content',
+                    opacity: timerSynced ? 1 : 0, // ✅ Hide until synced
+                    transform: timerSynced ? 'scale(1)' : 'scale(0.8)' // ✅ Smooth appearance
                 }}>
-                    {formatTime(timeLeft)}
+                    {timerSynced ? formatTime(timeLeft) : '04:00'} {/* ✅ Show placeholder until synced */}
                 </div>
             </div>
             

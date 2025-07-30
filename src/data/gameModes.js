@@ -30,7 +30,12 @@ const MODE_CONFIGS = {
     showHint: true,
     showSkip: true,
     scoreType: 'stars',
-    timerType: 'countdown'
+    // ✅ Configuration timer centralisée et flexible
+    timerType: 'countdown',
+    timerSeconds: 240, // 4 minutes par défaut
+    timerDisplay: true,
+    timerAutoStart: true,
+    timerSyncServer: false // Solo mode = timer local
   },
 
   // French Complete Mode - Dual map with DOM-TOM and Metropole
@@ -48,7 +53,12 @@ const MODE_CONFIGS = {
     showHint: true,
     showSkip: true,
     scoreType: 'stars',
+    // ✅ Configuration timer centralisée et flexible
     timerType: 'countdown',
+    timerSeconds: 300, // 5 minutes pour plus de régions
+    timerDisplay: true,
+    timerAutoStart: true,
+    timerSyncServer: false, // Solo mode = timer local
     zones: [
       {
         name: "DOM-TOM", 
@@ -113,6 +123,12 @@ const MULTIPLAYER_MODE_CONFIGS = {
     pointsPerCorrect: 10,
     pointsPerWrong: -2,
     showSkip: false, // Disable skip button in race mode
+    // ✅ Timer configuration pour mode race multiplayer
+    timerType: 'countdown',
+    timerSeconds: 240, // 4 minutes pour mode course
+    timerDisplay: true,
+    timerAutoStart: true,
+    timerSyncServer: true, // Multiplayer race = timer serveur synchronisé
     feedbackMessages: {
       ...MODE_CONFIGS.europe.feedbackMessages,
       victory: 'Victoire ! Vous avez atteint 100 points !',
@@ -137,6 +153,12 @@ const MULTIPLAYER_MODE_CONFIGS = {
     scoreType: 'points',
     victoryCondition: 'score_threshold',
     scoreThreshold: 40,
+    // ✅ Timer configuration pour mode multiplayer tour par tour
+    timerType: 'countdown',
+    timerSeconds: 300, // 5 minutes pour multiplayer français
+    timerDisplay: true,
+    timerAutoStart: true,
+    timerSyncServer: false, // Mode tour par tour = timer local pour chaque tour
     feedbackMessages: {
       ...MODE_CONFIGS.franceComplete.feedbackMessages,
       victory: 'Partie terminée ! Regardez les scores finaux.',

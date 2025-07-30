@@ -163,7 +163,13 @@ export const GAME_MODE_CONFIGS = {
         gameType: 'race',
         scoreThreshold: 100,
         pointsPerCorrect: 10,
-        pointsPerWrong: -2
+        pointsPerWrong: -2,
+        // ✅ Configuration timer pour synchronisation serveur
+        timerType: 'countdown',
+        timerSeconds: 240,
+        timerDisplay: true,
+        timerAutoStart: true,
+        timerSyncServer: true
     },
     franceComplete: {
         entities: FRENCH_REGIONS,

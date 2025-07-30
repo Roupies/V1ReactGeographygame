@@ -123,11 +123,20 @@ class GameManager {
    */
   getTimerConfig(modeKey, isMultiplayer = false) {
     const mode = this.getMode(modeKey, isMultiplayer);
-    if (!mode) return { type: 'countdown', seconds: 180 };
+    if (!mode) return { 
+      type: 'countdown', 
+      seconds: 180,
+      timerDisplay: true,
+      timerAutoStart: true,
+      timerSyncServer: false
+    };
     
     return {
       type: mode.timerType || 'countdown',
-      seconds: mode.timerSeconds || 180
+      seconds: mode.timerSeconds || 180,
+      timerDisplay: mode.timerDisplay !== false,
+      timerAutoStart: mode.timerAutoStart !== false,
+      timerSyncServer: mode.timerSyncServer === true
     };
   }
 
