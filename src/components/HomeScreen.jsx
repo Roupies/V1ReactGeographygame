@@ -22,9 +22,15 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
         fontSize: window.innerWidth <= 768 ? '2em' : '3em',  // Smaller text on mobile
         textAlign: 'center',
         padding: '0 20px',                // Horizontal padding for mobile
-        fontWeight: '600'                 // Semi-bold for better hierarchy
+        fontWeight: '600',                // Semi-bold for better hierarchy
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '15px'
       }}>
+        <span style={{ fontSize: '1.2em' }}>🌍</span>
         Mini jeu Géographie
+        <span style={{ fontSize: '1.2em' }}>🗺️</span>
       </h1>
       
       {/* Subtitle */}
@@ -80,7 +86,7 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
           }}
         >
           <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
-            🎯
+            🧭
           </span>
           Mode Solo
         </button>
@@ -120,7 +126,7 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
           }}
         >
           <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
-            🎮
+            🌐
           </span>
           Mode Multijoueur
         </button>
@@ -138,6 +144,23 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
         <strong style={{ color: '#495057' }}>Mode Solo :</strong> Jouez seul et améliorez vos connaissances<br/>
         <strong style={{ color: '#495057' }}>Mode Multijoueur :</strong> Jouez à 2 avec tours alternés en temps réel !
       </p>
+
+      {/* Footer géographique */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        display: 'flex',
+        gap: '20px',
+        fontSize: '1.2em',
+        opacity: '0.6',
+        color: '#6C757D'
+      }}>
+        <span>🏛️</span>
+        <span>🗼</span>
+        <span>🌍</span>
+        <span>🗺️</span>
+        <span>🏁</span>
+      </div>
     </div>
   );
 } 

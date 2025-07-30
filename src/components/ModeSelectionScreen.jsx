@@ -3,6 +3,16 @@
 import React from 'react';
 import gameManager from '../data/gameModes';
 
+// Fonction pour obtenir l'icône selon le mode
+const getModeIcon = (modeKey) => {
+  switch(modeKey) {
+    case 'europe': return '🏛️';
+    case 'franceComplete': return '🗼';
+    case 'europeRace': return '🏁';
+    default: return '🌍';
+  }
+};
+
 export default function ModeSelectionScreen({ 
   gameType, // 'solo' or 'multiplayer'
   onSelectMode, 
@@ -63,7 +73,7 @@ export default function ModeSelectionScreen({
           textAlign: 'center',
           fontWeight: '600'                // Semi-bold - new charte
         }}>
-          Choisissez une carte
+          🗺️ Choisissez une carte
         </h1>
         
         <div style={{ width: '60px' }}></div> {/* Spacer for centering */}
@@ -150,11 +160,13 @@ export default function ModeSelectionScreen({
                 e.target.style.backgroundColor = buttonColor;
               }}
             >
-              {uiCustomization.icon && (
-                <span style={{ fontSize: '2em', marginBottom: '12px' }}>
-                  {uiCustomization.icon}
-                </span>
-              )}
+              <span style={{ 
+                fontSize: '2.5em', 
+                marginBottom: '12px',
+                display: 'block'
+              }}>
+                {getModeIcon(modeKey)}
+              </span>
               <div style={{ fontWeight: '600', marginBottom: '8px' }}>
                 {mode?.label || modeKey}
               </div>

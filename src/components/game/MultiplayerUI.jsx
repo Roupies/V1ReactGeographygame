@@ -146,7 +146,8 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
           borderRadius: '10px',
           border: '1px solid #28a745'
         }}>
-          🎮 La partie va commencer !
+          <span style={{ marginRight: '8px', fontSize: '1.1em' }}>🚀</span>
+          La partie va commencer !
         </div>
       )}
 
@@ -161,6 +162,7 @@ export function WaitingRoom({ gameState, currentPlayer, onReady, onLeave, roomId
           borderRadius: '10px',
           border: '1px solid #DEE2E6'
         }}>
+          <span style={{ marginRight: '8px', fontSize: '1.1em' }}>⏳</span>
           En attente d'un autre joueur...
         </div>
       )}
