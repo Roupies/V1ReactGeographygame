@@ -137,17 +137,12 @@ export class GeographyRoom extends Room {
   
   startGame() {
     console.log("Starting game!");
-    this.state.gameStarted = true;
-    this.state.gameEnded = false;
-    this.state.turnNumber = 1;
     
-    // ✅ NOUVEAU : Initialiser timer global basé sur configuration
-    if (this.timerConfig.display && this.timerConfig.syncServer) {
-      this.state.gameTimeLeft = this.timerConfig.seconds;
-      if (this.timerConfig.autoStart) {
-        this.startGameTimer();
-      }
-    }
+    // ✅ CORRECTION : Reset explicite de l'état de fin de partie
+    this.state.gameEnded = false;
+    this.state.gameTimeLeft = this.timerConfig.seconds;
+    this.state.gameStarted = true;
+    this.state.turnNumber = 1;
     
     if (this.isRaceMode) {
       // Race mode: no turns, everyone can play simultaneously
@@ -157,8 +152,7 @@ export class GeographyRoom extends Room {
         message: "Course commencée ! Premier à 100 points !",
         gameType: "race",
         scoreThreshold: this.scoreThreshold,
-        timerSeconds: this.timerConfig.seconds,
-        timerEnabled: this.timerConfig.display
+        timerSeconds: this.timerConfig.seconds
       });
     } else {
       // Turn-based mode: set first player's turn
@@ -173,12 +167,15 @@ export class GeographyRoom extends Room {
         firstTurn: this.state.currentTurn,
         firstPlayer: firstPlayer ? firstPlayer.name : 'Unknown Player'
       });
-      
-      // Start turn timer for turn-based mode
-      this.startTurnTimer();
     }
     
     this.nextCountry();
+    
+    // ✅ CORRECTION : Timer démarre SEULEMENT quand configuré ET que la partie est vraiment prête
+    if (this.timerConfig.autoStart && this.state.gameStarted) {
+      console.log(`🕐 Démarrage timer global: ${this.timerConfig.seconds}s (mode: ${this.state.gameMode})`);
+      this.startGameTimer();
+    }
   }
   
   nextCountry() {
@@ -194,8 +191,8 @@ export class GeographyRoom extends Room {
     console.log(`Current country: ${country.name}`);
     
     this.broadcast("newCountry", {
-      countryCode: country.isoCode,
-      countryName: country.name
+      countryCode: country.isoCode
+      // ❌ SUPPRIMÉ : countryName révèle la réponse
     });
     
     // Only start turn timer in turn-based mode

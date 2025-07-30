@@ -33,19 +33,25 @@ export const useGameLogic = (modeKey, isMultiplayer = false, serverTimeLeft = nu
 
     // Handle timer expiration - single responsibility
     useEffect(() => {
-        if (timer.isExpired && !gameState.gameEnded && timer.config.timerDisplay) {
+        // ✅ CORRECTION : Vérifications plus strictes pour éviter fin de partie prématurée
+        if (timer.isExpired && 
+            !gameState.gameEnded && 
+            timer.config.timerDisplay && 
+            gameState.currentCountry && // S'assurer qu'on a un pays actuel
+            entities.length > 0) { // S'assurer que le jeu est initialisé
             console.log('⏰ Timer expired - ending game (mode:', modeKey, ')');
             gameState.setGameEnded(true);
         }
-    }, [timer.isExpired, gameState.gameEnded, gameState.setGameEnded, timer.config.timerDisplay, modeKey]);
+    }, [timer.isExpired, gameState.gameEnded, gameState.setGameEnded, timer.config.timerDisplay, modeKey, gameState.currentCountry, entities.length]);
 
     // Initialize game when mode changes
     useEffect(() => {
         if (modeKey && entities.length > 0) {
-            console.log('🎮 Initializing game for mode:', modeKey);
             gameState.initializeGame();
+            // ✅ CORRECTION : Reset explicit de gameEnded au début
+            gameState.setGameEnded(false);
         }
-    }, [modeKey, entities.length, gameState.initializeGame]);
+    }, [modeKey, entities.length, gameState.initializeGame, gameState.setGameEnded]);
 
     // Fixed reset function with proper dependencies
     const resetGame = useCallback(() => {

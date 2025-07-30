@@ -12,16 +12,20 @@ const geoJSONCache = new Map();
 const loadingPromises = new Map();
 const MAX_CACHE_SIZE = 3; // Limiter à 3 fichiers en cache sur mobile
 
-// Rendre le cache global accessible pour le préchargement
+// ✅ CORRECTION : Rendre le cache global accessible mais avec instance ID pour isolation
 if (typeof window !== 'undefined') {
-    window.geoJSONCache = geoJSONCache;
+    if (!window.geoJSONCache) {
+        window.geoJSONCache = new Map();
+    }
+    // Utiliser le cache global au lieu du cache local pour vraie persistence
 }
 
 // Fonction pour nettoyer le cache si nécessaire
 const cleanCache = () => {
-    if (geoJSONCache.size > MAX_CACHE_SIZE) {
-        const firstKey = geoJSONCache.keys().next().value;
-        geoJSONCache.delete(firstKey);
+    const cache = window.geoJSONCache || geoJSONCache;
+    if (cache.size > MAX_CACHE_SIZE) {
+        const firstKey = cache.keys().next().value;
+        cache.delete(firstKey);
         console.log('🗑️ Cache cleaned (mobile optimization)');
     }
 };
@@ -114,21 +118,19 @@ const MapChart = ({
 
     // Load GeoJSON data with mobile-optimized cache
     useEffect(() => {
-        console.log('📱 Mobile-optimized GeoJSON loading:', geoJsonPath);
         setLoading(true);
         setError(null);
         
         // Check cache first
-        if (geoJSONCache.has(geoJsonPath)) {
-            console.log('📦 From cache:', geoJsonPath);
-            setGeoData(geoJSONCache.get(geoJsonPath));
+        const cache = window.geoJSONCache || geoJSONCache;
+        if (cache.has(geoJsonPath)) {
+            setGeoData(cache.get(geoJsonPath));
             setLoading(false);
             return;
         }
         
         // Check if already loading
         if (loadingPromises.has(geoJsonPath)) {
-            console.log('⏳ Already loading:', geoJsonPath);
             loadingPromises.get(geoJsonPath)
                 .then(data => {
                     setGeoData(data);
@@ -148,7 +150,8 @@ const MapChart = ({
         loadingPromise
             .then(data => {
                 cleanCache(); // Nettoyer si nécessaire
-                geoJSONCache.set(geoJsonPath, data);
+                const cache = window.geoJSONCache || geoJSONCache;
+                cache.set(geoJsonPath, data);
                 loadingPromises.delete(geoJsonPath);
                 setGeoData(data);
                 setLoading(false);
@@ -184,34 +187,7 @@ const MapChart = ({
     // ✅ CORRIGÉ : Determine if we're in Europe mode via GameManager
     const isEuropeMode = selectedMode?.includes('europe') && geoIdProperty === 'ISO_A3';
 
-    // Debug info for mobile optimizations (only in development)
-    const debugInfo = process.env.NODE_ENV === 'development' && (
-        <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'rgba(0,0,0,0.8)',
-            color: 'white',
-            padding: '12px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            zIndex: 1001,
-            fontFamily: 'monospace',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            border: '1px solid rgba(255,255,255,0.2)'
-        }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#4CAF50' }}>
-                🚀 Mobile Optimizations
-            </div>
-            <div>📦 Cache: {geoJSONCache.size}/{MAX_CACHE_SIZE}</div>
-            <div>⏳ Loading: {loadingPromises.size}</div>
-            <div>📱 Mobile: {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '✅ Yes' : '❌ No'}</div>
-            <div style={{ marginTop: '8px', fontSize: '11px', color: '#FFD700' }}>
-                {geoJsonPath.includes('europe') ? '🗺️ Europe Map' : 
-                 geoJsonPath.includes('france') ? '🇫🇷 France Map' : '🗺️ Other Map'}
-            </div>
-        </div>
-    );
+    // ❌ SUPPRIMÉ : Debug panel mobile optimization indésirable
 
     // Memoize style function to prevent recreation on every render
     const getCountryStyle = useMemo(() => (geo) => {
@@ -586,7 +562,6 @@ const MapChart = ({
                 })}
             </ComposableMap>
             )}
-            {debugInfo}
         </div>
     );
 };

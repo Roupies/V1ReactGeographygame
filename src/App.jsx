@@ -11,7 +11,6 @@ import { useFocusManagement } from './hooks/useFocusManagement';
 import { useResponsiveProjection } from './hooks/useResponsiveProjection';
 import { useTheme } from './hooks/useTheme';
 import { useMultiplayer } from './hooks/useMultiplayer';
-import { useNetworkStatus } from './hooks/useNetworkStatus';
 import gameManager from './data/gameModes';
 import HomeScreen from './components/HomeScreen';
 import ModeSelectionScreen from './components/ModeSelectionScreen';
@@ -50,19 +49,32 @@ function App() {
     const multiplayer = useMultiplayer();
     
     // Network status for mobile optimization
-    const networkInfo = useNetworkStatus();
+    // ❌ SUPPRIMÉ : Code d'optimisation mobile indésirable
     
-    // Get game configuration from GameManager
+    // Clean and focused game configuration
     const gameConfig = useMemo(() => {
-        if (!selectedMode) return null;
+        return selectedMode ? gameManager.getMode(selectedMode, isMultiplayer) : null;
+    }, [selectedMode, isMultiplayer]);
+
+    // Preload GeoJSON files for better performance (simple version)
+    useEffect(() => {
+        const preloadFiles = ['/geojson/europe.json', '/geojson/regions.geojson'];
         
-        // In multiplayer, use the mode from server state if available
-        if (isMultiplayer && multiplayer.gameState.gameMode) {
-            return gameManager.getMode(multiplayer.gameState.gameMode, isMultiplayer);
+        if (!window.geoJSONCache) {
+            window.geoJSONCache = new Map();
         }
-        
-        return gameManager.getMode(selectedMode, isMultiplayer);
-    }, [selectedMode, isMultiplayer, multiplayer.gameState.gameMode]);
+
+        preloadFiles.forEach(file => {
+            if (!window.geoJSONCache.has(file)) {
+                fetch(file)
+                    .then(response => response.json())
+                    .then(data => {
+                        window.geoJSONCache.set(file, data);
+                    })
+                    .catch(err => console.warn('Preload failed:', file, err));
+            }
+        });
+    }, []);
 
     // Use modular game logic hook with GameManager
     // ✅ NOUVEAU : Passer serverTimeLeft pour synchronisation timer multiplayer
@@ -89,31 +101,6 @@ function App() {
             setSelectedMode(multiplayer.gameState.gameMode);
         }
     }, [isMultiplayer, multiplayer.gameState.gameMode, selectedMode]);
-
-    // Préchargement conditionnel des fichiers GeoJSON selon le device et la connexion
-    useEffect(() => {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isSlowConnection = networkInfo.isSlow || networkInfo.effectiveType === 'slow-2g' || networkInfo.effectiveType === '2g';
-
-        if (isMobile && !isSlowConnection && networkInfo.isOnline) {
-            // Précharger seulement le fichier le plus utilisé sur mobile
-            const mobilePriorityFile = '/geojson/europe.json';
-            
-            console.log('📱 Mobile preloading:', mobilePriorityFile);
-            fetch(mobilePriorityFile)
-                .then(response => response.json())
-                .then(data => {
-                    // Stocker dans le cache global (accessible depuis MapChart)
-                    if (window.geoJSONCache) {
-                        window.geoJSONCache.set(mobilePriorityFile, data);
-                    }
-                    console.log('✅ Mobile preloaded:', mobilePriorityFile);
-                })
-                .catch(err => console.warn('Mobile preload failed:', err));
-        } else if (isSlowConnection) {
-            console.log('🐌 Slow connection detected - skipping preload');
-        }
-    }, [networkInfo.isOnline, networkInfo.isSlow, networkInfo.effectiveType]);
 
     // Stable goToHome function
     const goToHome = useCallback(() => {

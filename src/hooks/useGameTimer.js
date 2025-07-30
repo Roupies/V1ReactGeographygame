@@ -16,8 +16,9 @@ export const useGameTimer = (modeKey, isMultiplayer, gameEnded, serverTimeLeft =
     // Récupérer la configuration timer depuis GameManager
     const timerConfig = gameManager.getTimerConfig(modeKey, isMultiplayer);
     
-    // État du timer local
-    const [localTimeLeft, setLocalTimeLeft] = useState(timerConfig.seconds);
+    // ✅ CORRECTION : État du timer local avec instance unique par composant
+    const [localTimeLeft, setLocalTimeLeft] = useState(() => timerConfig.seconds);
+    const [timerStarted, setTimerStarted] = useState(false);
     const intervalRef = useRef(null);
     
     // Déterminer si on utilise le timer serveur ou local
@@ -32,6 +33,7 @@ export const useGameTimer = (modeKey, isMultiplayer, gameEnded, serverTimeLeft =
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
+            setTimerStarted(false);
             return;
         }
         
@@ -41,27 +43,43 @@ export const useGameTimer = (modeKey, isMultiplayer, gameEnded, serverTimeLeft =
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
+            setTimerStarted(false);
             return;
         }
         
-        // Démarrer le timer local
-        intervalRef.current = setInterval(() => {
-            setLocalTimeLeft(prev => {
-                const newTime = prev - 1;
-                if (newTime <= 0) {
-                    return 0;
-                }
-                return newTime;
-            });
-        }, 1000);
+        // ✅ CORRECTION : Vérification supplémentaire - ne pas démarrer si pas d'entités
+        if (!modeKey) {
+            return;
+        }
         
+        // ✅ CORRECTION : Démarrer le timer automatiquement si toutes les conditions sont remplies
+        if (!timerStarted && !intervalRef.current) {
+            setTimerStarted(true);
+            
+            // Démarrer le timer local
+            intervalRef.current = setInterval(() => {
+                setLocalTimeLeft(prev => {
+                    const newTime = prev - 1;
+                    if (newTime <= 0) {
+                        clearInterval(intervalRef.current);
+                        intervalRef.current = null;
+                        setTimerStarted(false);
+                        return 0;
+                    }
+                    return newTime;
+                });
+            }, 1000);
+        }
+        
+        // Cleanup sur démontage
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
+                setTimerStarted(false);
             }
         };
-    }, [gameEnded, timerConfig, useServerTimer]);
+    }, [useServerTimer, timerConfig.timerDisplay, timerConfig.timerAutoStart, gameEnded, modeKey]);
     
     // Synchroniser le timer local avec le serveur si nécessaire
     useEffect(() => {
@@ -85,9 +103,30 @@ export const useGameTimer = (modeKey, isMultiplayer, gameEnded, serverTimeLeft =
         return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
     }, []);
     
+    // Fonction de démarrage manuel du timer
+    const startTimer = useCallback(() => {
+        if (!useServerTimer && !timerStarted && !intervalRef.current && timerConfig.timerDisplay) {
+            setTimerStarted(true);
+            
+            intervalRef.current = setInterval(() => {
+                setLocalTimeLeft(prev => {
+                    const newTime = prev - 1;
+                    if (newTime <= 0) {
+                        clearInterval(intervalRef.current);
+                        intervalRef.current = null;
+                        setTimerStarted(false);
+                        return 0;
+                    }
+                    return newTime;
+                });
+            }, 1000);
+        }
+    }, [useServerTimer, timerStarted, timerConfig.timerDisplay, modeKey]);
+    
     // Fonction de reset du timer
     const resetTimer = useCallback(() => {
         setLocalTimeLeft(timerConfig.seconds);
+        setTimerStarted(false);
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -120,6 +159,7 @@ export const useGameTimer = (modeKey, isMultiplayer, gameEnded, serverTimeLeft =
         isExpired: effectiveTimeLeft <= 0,
         
         // Fonctions de contrôle
+        startTimer, // ✅ NOUVEAU : Fonction de démarrage manuel
         setTimeLeft,
         resetTimer,
         formatTime,
