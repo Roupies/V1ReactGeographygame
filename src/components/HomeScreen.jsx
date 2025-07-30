@@ -85,7 +85,7 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
             e.target.style.backgroundColor = '#E9ECEF';
           }}
         >
-          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
+          <span style={{ marginRight: '12px', fontSize: '1.5em', pointerEvents: 'none' }}>
             🧭
           </span>
           Mode Solo
@@ -125,7 +125,7 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
             e.target.style.backgroundColor = '#6B9080';
           }}
         >
-          <span style={{ marginRight: '12px', fontSize: '1.5em' }}>
+          <span style={{ marginRight: '12px', fontSize: '1.5em', pointerEvents: 'none' }}>
             🌐
           </span>
           Mode Multijoueur

@@ -69,27 +69,29 @@ button:focus-visible {
   }
 }
 
-/* Shimmer animation for progress bars */
+/* Animation pour les étoiles qui brillent */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
-/* Spinner animation for mobile loading */
+/* Animation de rotation pour le spinner mobile */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Optimisations mobile pour les cartes */
+/* Styles optimisés pour mobile */
 @media (max-width: 768px) {
   .map-container {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+    padding: 5px;
   }
   
-  /* Réduire la complexité des animations sur mobile */
   .map-geography {
-    transition: fill 0.2s ease-out;
+    stroke-width: 0.3px !important;
   }
 }

@@ -160,17 +160,31 @@ export default function ModeSelectionScreen({
                 e.target.style.backgroundColor = buttonColor;
               }}
             >
-              <span style={{ 
+              <div style={{ 
                 fontSize: '2.5em', 
                 marginBottom: '12px',
-                display: 'block'
+                pointerEvents: 'none'
               }}>
                 {getModeIcon(modeKey)}
-              </span>
-              <div style={{ fontWeight: '600', marginBottom: '8px' }}>
+              </div>
+              
+              {/* Text content */}
+              <div style={{ 
+                fontWeight: '600', 
+                marginBottom: '8px', 
+                pointerEvents: 'none',
+                background: 'transparent',
+                textShadow: 'none'
+              }}>
                 {mode?.label || modeKey}
               </div>
-              <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
+              <div style={{ 
+                fontSize: '0.9em', 
+                opacity: 0.8, 
+                pointerEvents: 'none',
+                background: 'transparent',
+                textShadow: 'none'
+              }}>
                 {mode?.entities?.length || 0} {mode?.unitLabel || 'entités'}
               </div>
             </button>
