@@ -313,9 +313,10 @@ function App() {
 
     return (
         <div className="App" style={{
-            backgroundColor: theme?.colors?.background || '#ffffff',
             minHeight: '100vh',
-            transition: 'background-color 0.3s ease'
+            transition: 'background-color 0.3s ease',
+            background: 'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(107, 144, 128, 0.04) 40px, rgba(107, 144, 128, 0.04) 41px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(107, 144, 128, 0.04) 40px, rgba(107, 144, 128, 0.04) 41px)',
+            backgroundColor: '#ffffff'
         }}>
             {/* Multiplayer-specific UI components */}
             {isMultiplayer && multiplayer.isConnected && (

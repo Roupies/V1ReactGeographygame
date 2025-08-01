@@ -11,7 +11,8 @@ export default function HomeScreen({ onSelectMode, onSelectMultiplayer }) {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',                    // Full viewport height
-      background: '#F8F9FA',              // Light background - new charte graphique
+      background: 'repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(107, 144, 128, 0.08) 30px, rgba(107, 144, 128, 0.08) 31px), repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(107, 144, 128, 0.08) 30px, rgba(107, 144, 128, 0.08) 31px)',
+      backgroundColor: '#f8f9fa',
       padding: '20px',
       boxSizing: 'border-box'
     }}>
